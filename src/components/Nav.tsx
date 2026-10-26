@@ -1,5 +1,6 @@
-import { Link, activeOptions } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+
 import { navLinks, contact } from "@/lib/media";
 
 export function Nav() {

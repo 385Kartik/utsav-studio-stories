@@ -9,9 +9,15 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { MessageCircle } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SmoothScroll, Cursor } from "@/components/motion";
+import { Preloader } from "@/components/Preloader";
+import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
+import { contact } from "@/lib/media";
 
 function NotFoundComponent() {
   return (
@@ -78,20 +84,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Utsav Studio — Photography & Cinematography, Mira Road East" },
+      { name: "description", content: "Utsav Studio in Mira Road East — weddings, portraits, films and keepsakes since 1994." },
+      { property: "og:title", content: "Utsav Studio — Photography & Cinematography" },
+      { property: "og:description", content: "Weddings, portraits and cinematic films from Mira Road East since 1994." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "true" as const },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300..600&display=swap",
       },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -120,8 +127,23 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <SmoothScroll>
+        <Cursor />
+        <Preloader />
+        <Nav />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <Footer />
+        <a
+          href={contact.whatsapp}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Chat on WhatsApp"
+          className="fixed bottom-6 right-6 z-[70] flex size-14 items-center justify-center rounded-full bg-gold text-primary-foreground glow-gold transition-transform duration-300 hover:scale-110"
+        >
+          <MessageCircle className="size-6" aria-hidden />
+        </a>
+      </SmoothScroll>
     </QueryClientProvider>
   );
 }
