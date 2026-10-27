@@ -10,12 +10,13 @@ import {
 } from "react";
 
 let registered = false;
-function ensureGsap() {
+export function ensureGsap() {
   if (!registered && typeof window !== "undefined") {
     gsap.registerPlugin(ScrollTrigger);
     registered = true;
   }
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Smooth scroll (Lenis) wired into the GSAP ticker                    */
@@ -58,8 +59,9 @@ export function Cursor() {
     };
     const over = (e: MouseEvent) => {
       const hit = (e.target as HTMLElement).closest("a, button, [data-cursor]");
-      el.dataset.active = hit ? "true" : "false";
+      el.dataset["active"] = hit ? "true" : "false";
     };
+
     window.addEventListener("mousemove", move, { passive: true });
     window.addEventListener("mouseover", over, { passive: true });
     return () => {
