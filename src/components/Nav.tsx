@@ -20,9 +20,9 @@ export function Nav() {
           <Link
             to="/"
             onClick={() => setOpen(false)}
-            className="font-display text-2xl leading-none tracking-tight text-foreground md:text-3xl"
+            className="font-display text-2xl font-light leading-none tracking-tight text-foreground md:text-3xl"
           >
-            Utsav<span className="italic text-gold"> Studio</span>
+            Utsav Studio
           </Link>
           <button
             onClick={() => setOpen((v) => !v)}
