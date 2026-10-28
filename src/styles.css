@@ -179,6 +179,40 @@
   }
 }
 
+/* Bordered editorial button with an offset "echo" border (Mistral-style) */
+@utility btn-echo {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translate(9px, 9px);
+    border: 1px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+    pointer-events: none;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  &:hover::after {
+    transform: translate(4px, 4px);
+  }
+}
+
+/* Quiet scroll hint: a hairline that breathes downward */
+@utility scroll-hint {
+  animation: hint-drift 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes hint-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
 /* Custom cursor: hidden on touch devices */
 @media (pointer: fine) {
   .cursor-native-none,

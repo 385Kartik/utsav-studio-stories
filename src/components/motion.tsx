@@ -141,12 +141,11 @@ export function AnimatedTitle({
     const el = ref.current!;
     const ctx = gsap.context(() => {
       gsap.from(el.querySelectorAll("[data-word-inner]"), {
-        yPercent: 120,
-        rotate: 4,
-        duration: 1.1,
+        yPercent: 115,
+        duration: 1.2,
         delay,
         ease: "power4.out",
-        stagger: 0.045,
+        stagger: 0.05,
         scrollTrigger: { trigger: el, start: "top 92%", once: true },
       });
     }, el);

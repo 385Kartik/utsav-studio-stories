@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
+import { Eyebrow, OutlineButton } from "@/components/buttons";
 import { contact, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/services")({
@@ -29,12 +30,12 @@ function Services() {
     <main>
       <section className="mx-auto max-w-6xl px-6 pb-[8vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.5em] text-gold">Services</p>
+          <Eyebrow>Services</Eyebrow>
         </Reveal>
-        <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
+        <h1 className="mt-6 font-display text-5xl font-light leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="Every occasion," />
           <br />
-          <span className="italic text-gold">
+          <span className="italic text-foreground/85">
             <AnimatedTitle text="every emotion." delay={0.2} />
           </span>
         </h1>
@@ -63,7 +64,7 @@ function Services() {
           </ImageReveal>
           <div>
             <Reveal>
-              <p className="font-display text-6xl text-gold/40 md:text-7xl">{g.no}</p>
+              <p className="font-display text-6xl font-light text-foreground/20 md:text-7xl">{g.no}</p>
             </Reveal>
             <Reveal delay={0.05}>
               <h2 className="mt-2 font-display text-4xl tracking-tight text-foreground md:text-5xl">
@@ -79,7 +80,7 @@ function Services() {
               {g.items.map((item, j) => (
                 <Reveal key={item} delay={0.12 + j * 0.05}>
                   <li className="group flex items-center gap-4 border-t border-border py-4 text-foreground transition-colors last:border-b">
-                    <Check className="size-4 shrink-0 text-gold" aria-hidden />
+                    <Check className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                     <span className="text-base transition-transform duration-300 group-hover:translate-x-2 md:text-lg">
                       {item}
                     </span>
@@ -96,8 +97,8 @@ function Services() {
         <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-6 py-[10vh] md:flex-row md:items-center md:justify-between md:px-10">
           <div>
             <Reveal>
-              <p className="text-xs uppercase tracking-[0.5em] text-gold">Visit the studio</p>
-              <p className="mt-4 font-display text-3xl tracking-tight text-foreground md:text-4xl">
+              <Eyebrow>Visit the studio</Eyebrow>
+              <p className="mt-4 font-display text-3xl font-light tracking-tight text-foreground md:text-4xl">
                 Walk-ins welcome · Tue–Sun, 11 AM – 9:30 PM
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -106,13 +107,7 @@ function Services() {
             </Reveal>
           </div>
           <Reveal delay={0.1}>
-            <Link
-              to="/contact"
-              className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-4 text-sm font-medium uppercase tracking-[0.2em] text-primary-foreground transition-transform duration-300 hover:scale-[1.04] glow-gold"
-            >
-              Get a quote
-              <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:rotate-45" aria-hidden />
-            </Link>
+            <OutlineButton to="/contact">Get a quote</OutlineButton>
           </Reveal>
         </div>
       </section>
