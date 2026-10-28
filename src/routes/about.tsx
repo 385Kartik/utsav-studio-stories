@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, Aperture, Camera, Film } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
+import { Eyebrow } from "@/components/buttons";
 import { media } from "@/lib/media";
 import { CtaBand } from "./index";
 
@@ -31,12 +32,12 @@ function About() {
       {/* Intro */}
       <section className="mx-auto max-w-6xl px-6 pb-[10vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.5em] text-gold">About the studio</p>
+          <Eyebrow>About the studio</Eyebrow>
         </Reveal>
-        <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
+        <h1 className="mt-6 font-display text-5xl font-light leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="A legacy in light," />
           <br />
-          <span className="italic text-gold">
+          <span className="italic text-foreground/85">
             <AnimatedTitle text="since 1994." delay={0.2} />
           </span>
         </h1>
@@ -87,7 +88,7 @@ function About() {
                 { n: "6 days", l: "Open every week*" },
               ].map((s) => (
                 <div key={s.l}>
-                  <p className="font-display text-3xl text-gold md:text-4xl">{s.n}</p>
+                  <p className="font-display text-3xl font-light text-foreground md:text-4xl">{s.n}</p>
                   <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">
                     {s.l}
                   </p>
