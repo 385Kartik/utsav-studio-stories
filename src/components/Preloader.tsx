@@ -14,7 +14,7 @@ export function Preloader() {
     const tl = gsap.timeline({
       onComplete: () => {
         document.documentElement.style.overflow = "";
-        ScrollTrigger.refresh();
+        refreshScrollTriggers();
         setDone(true);
       },
     });
