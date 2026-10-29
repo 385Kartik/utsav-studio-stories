@@ -17,6 +17,13 @@ export function ensureGsap() {
   }
 }
 
+/* The only place gsap/ScrollTrigger is imported: other modules call these
+ * helpers so the plugin never crosses a chunk boundary as an import binding. */
+export function refreshScrollTriggers() {
+  ensureGsap();
+  ScrollTrigger.refresh();
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Smooth scroll (Lenis) wired into the GSAP ticker                    */
