@@ -121,7 +121,7 @@ function About() {
             },
           ].map((v, i) => (
             <Reveal key={v.t} delay={i * 0.1} className="flex flex-col gap-4">
-              <v.Icon className="size-7 text-gold" aria-hidden />
+              <v.Icon className="size-6 text-muted-foreground" aria-hidden />
               <h3 className="font-display text-2xl tracking-tight text-foreground">{v.t}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{v.d}</p>
             </Reveal>
@@ -154,8 +154,10 @@ function About() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60" />
         <div className="absolute bottom-12 left-6 md:left-10">
           <Reveal>
-            <p className="text-xs uppercase tracking-[0.4em] text-gold">On set, always</p>
-            <p className="mt-3 max-w-md font-display text-3xl tracking-tight text-foreground md:text-5xl">
+            <p className="text-[10px] uppercase tracking-[0.45em] text-muted-foreground">
+              On set, always
+            </p>
+            <p className="mt-3 max-w-md font-display text-3xl font-light tracking-tight text-foreground md:text-5xl">
               Every film is directed, lit and edited by the studio itself.
             </p>
           </Reveal>
@@ -167,7 +169,7 @@ function About() {
       <div className="mx-auto max-w-7xl px-6 pb-16 text-center md:px-10">
         <Link
           to="/services"
-          className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-gold"
+          className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors duration-500 hover:text-foreground"
         >
           See what we offer
           <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:rotate-45" aria-hidden />
