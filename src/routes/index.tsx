@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   AnimatedTitle,
   Counter,
@@ -219,21 +218,22 @@ function ServicesScroller() {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    ensureGsap();
     const el = ref.current!;
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>("[data-service-row]").forEach((row, i) => {
-        ScrollTrigger.create({
-          trigger: row,
-          start: "top 60%",
-          end: "bottom 60%",
-          onToggle: (self: ScrollTrigger) => {
-            if (self.isActive) setActive(i);
-          },
-        });
-      });
-    }, el);
-    return () => ctx.revert();
+    const rows = Array.from(el.querySelectorAll<HTMLElement>("[data-service-row]"));
+    // Browser-native active-section tracking: a row is active while it
+    // overlaps the horizontal band around 60% of the viewport height.
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActive(rows.indexOf(entry.target as HTMLElement));
+          }
+        }
+      },
+      { rootMargin: "-42% 0px -42% 0px", threshold: 0 },
+    );
+    rows.forEach((row) => io.observe(row));
+    return () => io.disconnect();
   }, []);
 
   return (
