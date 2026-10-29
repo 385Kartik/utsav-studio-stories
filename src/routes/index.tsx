@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   AnimatedTitle,
   Counter,
@@ -222,11 +223,11 @@ function ServicesScroller() {
     const el = ref.current!;
     const ctx = gsap.context(() => {
       gsap.utils.toArray<HTMLElement>("[data-service-row]").forEach((row, i) => {
-        gsap.ScrollTrigger.create({
+        ScrollTrigger.create({
           trigger: row,
           start: "top 60%",
           end: "bottom 60%",
-          onToggle: (self) => {
+          onToggle: (self: ScrollTrigger) => {
             if (self.isActive) setActive(i);
           },
         });
