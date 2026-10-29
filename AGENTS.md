@@ -12,3 +12,8 @@
 ## Architecture decisions
 - Motion runs client-side only: GSAP + ScrollTrigger and Lenis are instantiated inside `useEffect` in `src/components/motion.tsx` and `src/components/Preloader.tsx` — never call them at module scope, routes are SSR'd on workerd.
 - Design tokens (dark cinematic, amber `--gold`) live in `src/styles.css`; components must use semantic classes (`bg-gold`, `text-foreground`…), no hardcoded colors.
+
+## Design direction (user-approved, Mistral-inspired)
+- Editorial and restrained: eyebrows are muted cream caps (`Eyebrow` from `src/components/buttons.tsx`); gold appears only as a small accent (WhatsApp icon, star), never in headings, buttons, icons lists or full-row hover fills.
+- Buttons are bordered rectangles with letter-spaced caps and the offset echo border — use `OutlineButton` / `OutlineAnchor` from `src/components/buttons.tsx`. No pill buttons, no `glow-gold`, no scale-hover.
+- Headlines are light-weight Fraunces serif, often with an italic second line in `text-foreground/85`; reveal animations are straight masked slides (no word rotation).
