@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
 import {
@@ -329,7 +329,7 @@ function ImageWordMarquee() {
 
   return (
     <div className="overflow-hidden border-y border-border py-10" aria-hidden>
-      <div className="marquee-track" style={{ "--marquee-duration": "44s" } as React.CSSProperties}>
+      <div className="marquee-track" style={{ "--marquee-duration": "44s" } as CSSProperties}>
         {row("a")}
         {row("b")}
       </div>

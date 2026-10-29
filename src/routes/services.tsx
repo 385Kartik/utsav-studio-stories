@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
