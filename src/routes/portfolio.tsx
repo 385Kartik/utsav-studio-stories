@@ -38,7 +38,7 @@ function Portfolio() {
     <main>
       <section className="mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.5em] text-gold">Portfolio</p>
+          <p className="text-[11px] uppercase tracking-[0.55em] text-muted-foreground">Portfolio</p>
         </Reveal>
         <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="Selected frames" />
@@ -59,8 +59,8 @@ function Portfolio() {
                 aria-pressed={filter === f}
                 className={`rounded-full border px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${
                   filter === f
-                    ? "border-gold bg-gold text-primary-foreground"
-                    : "border-border text-muted-foreground hover:border-gold hover:text-gold"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                 }`}
               >
                 {f}
@@ -99,7 +99,7 @@ function Portfolio() {
         <Reveal className="mt-16 text-center">
           <Link
             to="/contact"
-            className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-gold"
+            className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors duration-500 hover:text-foreground"
           >
             Plan your shoot with us
             <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:rotate-45" aria-hidden />

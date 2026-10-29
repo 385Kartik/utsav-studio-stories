@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
-import { AnimatedTitle, Magnetic, Reveal } from "@/components/motion";
+import { Clock, MapPin, Phone } from "lucide-react";
+import { AnimatedTitle, Reveal } from "@/components/motion";
+import { Eyebrow, OutlineAnchor } from "@/components/buttons";
 import { contact } from "@/lib/media";
 
 export const Route = createFileRoute("/contact")({
@@ -31,12 +32,12 @@ function Contact() {
     <main>
       <section className="mx-auto max-w-6xl px-6 pb-[8vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.5em] text-gold">Contact</p>
+          <Eyebrow>Contact</Eyebrow>
         </Reveal>
-        <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
+        <h1 className="mt-6 font-display text-5xl font-light leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="Let's plan" />
           <br />
-          <span className="italic text-gold">
+          <span className="italic text-foreground/85">
             <AnimatedTitle text="your shoot." delay={0.2} />
           </span>
         </h1>
@@ -47,9 +48,11 @@ function Contact() {
         <div className="flex flex-col gap-10">
           <Reveal>
             <div className="flex gap-4">
-              <MapPin className="mt-1 size-5 shrink-0 text-gold" aria-hidden />
+              <MapPin className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
               <div>
-                <h2 className="text-xs uppercase tracking-[0.35em] text-gold">Studio address</h2>
+                <p className="text-[10px] uppercase tracking-[0.45em] text-muted-foreground">
+                  Studio address
+                </p>
                 <address className="mt-3 text-base not-italic leading-relaxed text-foreground">
                   {contact.addressLines.map((line) => (
                     <span key={line} className="block">
@@ -61,7 +64,7 @@ function Contact() {
                   href={contact.mapsLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-block text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-gold hover:underline"
+                  className="mt-3 inline-block text-sm text-muted-foreground underline-offset-4 transition-colors duration-300 hover:text-foreground hover:underline"
                 >
                   Open in Google Maps
                 </a>
@@ -71,12 +74,14 @@ function Contact() {
 
           <Reveal delay={0.05}>
             <div className="flex gap-4">
-              <Phone className="mt-1 size-5 shrink-0 text-gold" aria-hidden />
+              <Phone className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
               <div>
-                <h2 className="text-xs uppercase tracking-[0.35em] text-gold">Call / WhatsApp</h2>
+                <p className="text-[10px] uppercase tracking-[0.45em] text-muted-foreground">
+                  Call / WhatsApp
+                </p>
                 <a
                   href={contact.phoneHref}
-                  className="mt-3 block font-display text-3xl tracking-tight text-foreground transition-colors hover:text-gold md:text-4xl"
+                  className="mt-3 block font-display text-3xl font-light tracking-tight text-foreground transition-colors duration-300 hover:text-foreground/70 md:text-4xl"
                 >
                   {contact.phoneDisplay}
                 </a>
@@ -86,9 +91,11 @@ function Contact() {
 
           <Reveal delay={0.1}>
             <div className="flex gap-4">
-              <Clock className="mt-1 size-5 shrink-0 text-gold" aria-hidden />
+              <Clock className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
               <div>
-                <h2 className="text-xs uppercase tracking-[0.35em] text-gold">Studio hours</h2>
+                <p className="text-[10px] uppercase tracking-[0.45em] text-muted-foreground">
+                  Studio hours
+                </p>
                 <dl className="mt-3 text-base">
                   <div className="flex justify-between gap-8 border-b border-border py-2">
                     <dt className="text-muted-foreground">Tuesday – Sunday</dt>
@@ -104,17 +111,7 @@ function Contact() {
           </Reveal>
 
           <Reveal delay={0.15}>
-            <Magnetic className="inline-block">
-              <a
-                href={contact.whatsapp}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-3 rounded-full bg-gold px-8 py-4 text-sm font-medium uppercase tracking-[0.2em] text-primary-foreground transition-transform duration-300 hover:scale-[1.04] glow-gold"
-              >
-                <MessageCircle className="size-4" aria-hidden />
-                Chat on WhatsApp
-              </a>
-            </Magnetic>
+            <OutlineAnchor href={contact.whatsapp}>Chat on WhatsApp</OutlineAnchor>
           </Reveal>
         </div>
 
@@ -129,7 +126,7 @@ function Contact() {
               className="absolute inset-0 size-full grayscale-[35%] contrast-[1.05]"
               allowFullScreen
             />
-            <span className="pointer-events-none absolute inset-0 border border-gold/20" aria-hidden />
+            <span className="pointer-events-none absolute inset-0 border border-foreground/15" aria-hidden />
           </div>
         </Reveal>
       </section>
@@ -142,7 +139,7 @@ function Contact() {
           </p>
           <a
             href={contact.phoneHref}
-            className="mt-6 inline-block font-display text-[11vw] leading-none tracking-tight text-foreground transition-colors hover:text-gold md:text-[7vw]"
+            className="mt-6 inline-block font-display text-[11vw] font-light leading-none tracking-tight text-foreground transition-colors duration-500 hover:text-foreground/70 md:text-[7vw]"
           >
             {contact.phoneDisplay}
           </a>
