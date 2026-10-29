@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { useEffect, useRef, useState } from "react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { refreshScrollTriggers } from "@/components/motion";
 
 const BRAND = "UTSAV STUDIO";
 
@@ -14,7 +14,7 @@ export function Preloader() {
     const tl = gsap.timeline({
       onComplete: () => {
         document.documentElement.style.overflow = "";
-        ScrollTrigger.refresh();
+        refreshScrollTriggers();
         setDone(true);
       },
     });

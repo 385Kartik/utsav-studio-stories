@@ -11,6 +11,7 @@
 
 ## Architecture decisions
 - Motion runs client-side only: GSAP + ScrollTrigger and Lenis are instantiated inside `useEffect` in `src/components/motion.tsx` and `src/components/Preloader.tsx` — never call them at module scope, routes are SSR'd on workerd.
+- `gsap/ScrollTrigger` may only be imported inside `src/components/motion.tsx`; other modules use `ensureGsap()` / `refreshScrollTriggers()` from it. Direct imports elsewhere (or `ScrollTrigger.create` in route files) resolve to `undefined` in production chunking and blank-screen the page — use browser APIs (e.g. IntersectionObserver) or helpers instead.
 - Design tokens (dark cinematic, amber `--gold`) live in `src/styles.css`; components must use semantic classes (`bg-gold`, `text-foreground`…), no hardcoded colors.
 
 ## Design direction (user-approved, Mistral-inspired)
