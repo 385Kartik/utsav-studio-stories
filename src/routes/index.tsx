@@ -348,10 +348,10 @@ function StatsBand() {
         src={media.cinema}
         alt=""
         className="absolute inset-0"
-        imgClassName="opacity-30"
+        imgClassName="opacity-45"
         speed={10}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/30 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/20 to-background" />
       <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 py-[18vh] text-center sm:grid-cols-3">
         {[
           { value: <Counter to={30} suffix="+" />, label: "Years of craft" },
