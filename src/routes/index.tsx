@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   AnimatedTitle,
   Counter,
@@ -222,11 +223,11 @@ function ServicesScroller() {
     const el = ref.current!;
     const ctx = gsap.context(() => {
       gsap.utils.toArray<HTMLElement>("[data-service-row]").forEach((row, i) => {
-        gsap.ScrollTrigger.create({
+        ScrollTrigger.create({
           trigger: row,
           start: "top 60%",
           end: "bottom 60%",
-          onToggle: (self) => {
+          onToggle: (self: ScrollTrigger) => {
             if (self.isActive) setActive(i);
           },
         });
@@ -329,7 +330,7 @@ function ImageWordMarquee() {
 
   return (
     <div className="overflow-hidden border-y border-border py-10" aria-hidden>
-      <div className="marquee-track" style={{ "--marquee-duration": "44s" } as React.CSSProperties}>
+      <div className="marquee-track" style={{ "--marquee-duration": "44s" } as CSSProperties}>
         {row("a")}
         {row("b")}
       </div>
@@ -347,10 +348,10 @@ function StatsBand() {
         src={media.cinema}
         alt=""
         className="absolute inset-0"
-        imgClassName="opacity-30"
+        imgClassName="opacity-45"
         speed={10}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/30 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/20 to-background" />
       <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 py-[18vh] text-center sm:grid-cols-3">
         {[
           { value: <Counter to={30} suffix="+" />, label: "Years of craft" },
