@@ -29,7 +29,7 @@ function Contact() {
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(contact.mapsQuery)}&output=embed`;
 
   return (
-    <main>
+    <main className="theme-light min-h-screen bg-background text-foreground">
       <section className="mx-auto max-w-6xl px-6 pb-[8vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
           <Eyebrow>Contact</Eyebrow>
@@ -41,6 +41,12 @@ function Contact() {
             <AnimatedTitle text="your shoot." delay={0.2} />
           </span>
         </h1>
+        <Reveal delay={0.25}>
+          <p className="mt-10 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
+            The fastest way to reach us is a call or WhatsApp. Prefer to talk it over in person?
+            Walk into the studio any Tuesday–Sunday — the chai is on us.
+          </p>
+        </Reveal>
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-14 px-6 pb-[10vh] md:grid-cols-[1fr_1.2fr] md:px-10">
@@ -123,10 +129,13 @@ function Contact() {
               src={mapSrc}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="absolute inset-0 size-full grayscale-[35%] contrast-[1.05]"
+              className="absolute inset-0 size-full grayscale-[20%] contrast-[1.02]"
               allowFullScreen
             />
-            <span className="pointer-events-none absolute inset-0 border border-foreground/15" aria-hidden />
+            <span
+              className="pointer-events-none absolute inset-0 border border-foreground/15"
+              aria-hidden
+            />
           </div>
         </Reveal>
       </section>
