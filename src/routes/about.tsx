@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, Aperture, Camera, Film } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
-import { Eyebrow } from "@/components/buttons";
+import { Eyebrow, OutlineButton } from "@/components/buttons";
 import { media } from "@/lib/media";
 import { CtaBand } from "./index";
 
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <main>
+    <main className="theme-light min-h-screen bg-background text-foreground">
       {/* Intro */}
       <section className="mx-auto max-w-6xl px-6 pb-[10vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
@@ -88,7 +88,9 @@ function About() {
                 { n: "6 days", l: "Open every week*" },
               ].map((s) => (
                 <div key={s.l}>
-                  <p className="font-display text-3xl font-light text-foreground md:text-4xl">{s.n}</p>
+                  <p className="font-display text-3xl font-light text-foreground md:text-4xl">
+                    {s.n}
+                  </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">
                     {s.l}
                   </p>
@@ -101,7 +103,7 @@ function About() {
       </section>
 
       {/* Values */}
-      <section className="border-y border-border bg-card/40">
+      <section className="border-y border-border bg-card/50">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-[12vh] md:grid-cols-3 md:px-10">
           {[
             {
@@ -166,15 +168,33 @@ function About() {
 
       <CtaBand />
 
-      <div className="mx-auto max-w-7xl px-6 pb-16 text-center md:px-10">
+      <div className="mx-auto max-w-7xl px-6 py-16 text-center md:px-10">
         <Link
           to="/services"
           className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors duration-500 hover:text-foreground"
         >
           See what we offer
-          <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:rotate-45" aria-hidden />
+          <ArrowUpRight
+            className="size-4 transition-transform duration-500 group-hover:rotate-45"
+            aria-hidden
+          />
         </Link>
       </div>
+
+      {/* Booking nudge */}
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-6 py-[8vh] md:flex-row md:items-center md:justify-between md:px-10">
+          <Reveal>
+            <Eyebrow>Ready when you are</Eyebrow>
+            <p className="mt-4 font-display text-3xl font-light tracking-tight text-foreground md:text-4xl">
+              Tell us about your occasion
+            </p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <OutlineButton to="/contact">Plan your shoot</OutlineButton>
+          </Reveal>
+        </div>
+      </section>
     </main>
   );
 }
