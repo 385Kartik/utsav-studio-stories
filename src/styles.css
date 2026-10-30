@@ -70,6 +70,54 @@
   --ember: oklch(0.62 0.16 45);
 }
 
+/*
+ * Light editorial theme — applied per page via the `.theme-light` wrapper
+ * (Services, About, Contact). Same token names, warm cream canvas + ink.
+ * `.theme-dark` restores the dark showcase palette inside a light page
+ * (e.g. the cinematic CTA band).
+ */
+.theme-light {
+  --background: oklch(0.965 0.012 85);
+  --foreground: oklch(0.24 0.02 55);
+  --card: oklch(0.925 0.014 85);
+  --card-foreground: oklch(0.24 0.02 55);
+  --popover: oklch(0.965 0.012 85);
+  --popover-foreground: oklch(0.24 0.02 55);
+  --primary: oklch(0.45 0.08 60);
+  --primary-foreground: oklch(0.965 0.012 85);
+  --secondary: oklch(0.9 0.015 82);
+  --secondary-foreground: oklch(0.24 0.02 55);
+  --muted: oklch(0.9 0.012 82);
+  --muted-foreground: oklch(0.5 0.022 60);
+  --accent: oklch(0.9 0.015 82);
+  --accent-foreground: oklch(0.24 0.02 55);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0.01 80);
+  --border: oklch(0.24 0.02 55 / 14%);
+  --input: oklch(0.24 0.02 55 / 18%);
+  --ring: oklch(0.78 0.13 76 / 50%);
+}
+
+.theme-dark {
+  --background: oklch(0.145 0.008 65);
+  --foreground: oklch(0.94 0.018 82);
+  --card: oklch(0.185 0.01 65);
+  --card-foreground: oklch(0.94 0.018 82);
+  --popover: oklch(0.16 0.01 65);
+  --popover-foreground: oklch(0.94 0.018 82);
+  --primary: oklch(0.78 0.13 76);
+  --primary-foreground: oklch(0.16 0.02 60);
+  --secondary: oklch(0.24 0.012 65);
+  --secondary-foreground: oklch(0.94 0.018 82);
+  --muted: oklch(0.22 0.01 65);
+  --muted-foreground: oklch(0.66 0.02 75);
+  --accent: oklch(0.24 0.02 70);
+  --accent-foreground: oklch(0.94 0.018 82);
+  --border: oklch(0.94 0.018 82 / 12%);
+  --input: oklch(0.94 0.018 82 / 16%);
+  --ring: oklch(0.78 0.13 76 / 60%);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
