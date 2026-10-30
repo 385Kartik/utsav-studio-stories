@@ -25,10 +25,41 @@ export const Route = createFileRoute("/services")({
   component: Services,
 });
 
+const anchors = [
+  { id: "weddings-events", no: "01", label: "Weddings & Events" },
+  { id: "portraits-family", no: "02", label: "Portraits & Family" },
+  { id: "cinematic-films", no: "03", label: "Cinematic Films" },
+  { id: "keepsakes-finishing", no: "04", label: "Keepsakes" },
+];
+
+const process = [
+  {
+    no: "01",
+    t: "Share your date",
+    d: "Call or WhatsApp us with your occasion and dates — we'll confirm availability right away.",
+  },
+  {
+    no: "02",
+    t: "Plan the coverage",
+    d: "We suggest the right team, hours and style for your occasion at the studio, over a visit or a call.",
+  },
+  {
+    no: "03",
+    t: "The shoot",
+    d: "Our team covers every ritual and moment — candid where it matters, traditional where it counts.",
+  },
+  {
+    no: "04",
+    t: "Hand-finished delivery",
+    d: "Editing, retouching, album design and films are completed in-house and delivered as promised.",
+  },
+];
+
 function Services() {
   return (
-    <main>
-      <section className="mx-auto max-w-6xl px-6 pb-[8vh] pt-40 md:px-10 md:pt-52">
+    <main className="theme-light min-h-screen bg-background text-foreground">
+      {/* Hero + service index */}
+      <section className="mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
           <Eyebrow>Services</Eyebrow>
         </Reveal>
@@ -45,16 +76,31 @@ function Services() {
             light and the patience to wait for the real moment.
           </p>
         </Reveal>
+        <Reveal delay={0.3}>
+          <nav aria-label="Jump to a service" className="mt-12 flex flex-wrap gap-x-10 gap-y-4">
+            {anchors.map((a) => (
+              <a
+                key={a.id}
+                href={`#${a.id}`}
+                className="group flex items-baseline gap-3 text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
+              >
+                <span className="text-[10px] tracking-[0.3em]">{a.no}</span>
+                <span className="font-display text-lg tracking-tight text-foreground">
+                  {a.label}
+                </span>
+              </a>
+            ))}
+          </nav>
+        </Reveal>
       </section>
 
       {serviceGroups.map((g, i) => (
         <section
           key={g.no}
-          className={`mx-auto grid max-w-7xl items-center gap-12 px-6 py-[10vh] md:grid-cols-2 md:px-10 ${
-            i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
-          }`}
+          id={anchors[i]?.id}
+          className="mx-auto grid max-w-7xl scroll-mt-28 items-center gap-12 px-6 py-[10vh] md:grid-cols-2 md:px-10"
         >
-          <ImageReveal>
+          <ImageReveal className={i % 2 === 1 ? "md:order-2" : ""}>
             <ParallaxImage
               src={g.image}
               alt={`${g.title} by Utsav Studio`}
@@ -64,7 +110,9 @@ function Services() {
           </ImageReveal>
           <div>
             <Reveal>
-              <p className="font-display text-6xl font-light text-foreground/20 md:text-7xl">{g.no}</p>
+              <p className="font-display text-6xl font-light text-foreground/15 md:text-7xl">
+                {g.no}
+              </p>
             </Reveal>
             <Reveal delay={0.05}>
               <h2 className="mt-2 font-display text-4xl tracking-tight text-foreground md:text-5xl">
@@ -76,24 +124,50 @@ function Services() {
                 {g.blurb}
               </p>
             </Reveal>
-            <ul className="mt-8 flex flex-col">
+            <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2">
               {g.items.map((item, j) => (
                 <Reveal key={item} delay={0.12 + j * 0.05}>
-                  <li className="group flex items-center gap-4 border-t border-border py-4 text-foreground transition-colors last:border-b">
+                  <li className="group flex items-center gap-4 border-t border-border py-4 text-foreground sm:odd:border-r sm:odd:pr-6 sm:even:pl-6 sm:[&:nth-last-child(-n+2)]:border-b">
                     <Check className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="text-base transition-transform duration-300 group-hover:translate-x-2 md:text-lg">
+                    <span className="text-sm leading-snug transition-transform duration-300 group-hover:translate-x-1 md:text-base">
                       {item}
                     </span>
                   </li>
                 </Reveal>
               ))}
             </ul>
+            <Reveal delay={0.2}>
+              <OutlineButton to="/contact" className="mt-10">
+                Enquire for this
+              </OutlineButton>
+            </Reveal>
           </div>
         </section>
       ))}
 
+      {/* How booking works */}
+      <section className="border-y border-border bg-card/50">
+        <div className="mx-auto max-w-7xl px-6 py-[12vh] md:px-10">
+          <Reveal>
+            <Eyebrow>How booking works</Eyebrow>
+          </Reveal>
+          <h2 className="mt-5 max-w-2xl font-display text-4xl font-light tracking-tight text-foreground md:text-5xl">
+            From enquiry to heirloom, in four steps
+          </h2>
+          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {process.map((p, i) => (
+              <Reveal key={p.no} delay={i * 0.08} className="flex flex-col gap-4">
+                <span className="font-display text-4xl font-light text-foreground/25">{p.no}</span>
+                <h3 className="font-display text-xl tracking-tight text-foreground">{p.t}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{p.d}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Booking note */}
-      <section className="border-y border-border bg-card/40">
+      <section>
         <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-6 py-[10vh] md:flex-row md:items-center md:justify-between md:px-10">
           <div>
             <Reveal>
