@@ -255,13 +255,23 @@ function ServicesScroller() {
               key={g.no}
               data-service-row
               to="/services"
-              className={`block border-b border-border py-9 transition-all duration-700 md:py-12 ${
+              className={`group block border-b border-border py-9 transition-opacity duration-700 md:py-12 ${
                 active === i ? "opacity-100" : "opacity-35 md:opacity-30"
               }`}
             >
               <span className="flex items-baseline gap-5">
-                <span className="text-[10px] tracking-[0.35em] text-muted-foreground">{g.no}</span>
-                <span className="font-display text-3xl font-light tracking-tight text-foreground transition-transform duration-700 md:text-5xl">
+                <span
+                  className={`text-[10px] tracking-[0.35em] transition-colors duration-700 ${
+                    active === i ? "text-gold" : "text-muted-foreground"
+                  }`}
+                >
+                  {g.no}
+                </span>
+                <span
+                  className={`font-display text-3xl font-light tracking-tight text-foreground transition-transform duration-700 group-hover:translate-x-1 md:text-5xl ${
+                    active === i ? "md:translate-x-2" : ""
+                  }`}
+                >
                   {g.title}
                 </span>
               </span>
@@ -377,7 +387,7 @@ function StatsBand() {
 /* ------------------------------------------------------------------ */
 export function CtaBand() {
   return (
-    <section className="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-6 py-24 text-center">
+    <section className="theme-dark relative flex min-h-[72vh] items-center justify-center overflow-hidden bg-background px-6 py-24 text-center">
       <ParallaxImage
         src={media.hero}
         alt=""
