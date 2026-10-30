@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AnimatedTitle, ImageReveal, Reveal } from "@/components/motion";
 import { galleryItems } from "@/lib/media";
 
@@ -31,14 +31,33 @@ const aspectCycle = ["aspect-[3/4]", "aspect-[4/5]", "aspect-square", "aspect-[3
 
 function Portfolio() {
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
+  const [lightbox, setLightbox] = useState<number | null>(null);
   const items =
     filter === "All" ? galleryItems : galleryItems.filter((g) => g.category === filter);
+
+  useEffect(() => {
+    if (lightbox === null) return;
+    document.documentElement.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") setLightbox((v) => (v === null ? v : (v + 1) % items.length));
+      if (e.key === "ArrowLeft")
+        setLightbox((v) => (v === null ? v : (v - 1 + items.length) % items.length));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.documentElement.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [lightbox === null, items.length]);
+
+  const current = lightbox === null ? null : items[lightbox];
 
   return (
     <main>
       <section className="mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-[11px] uppercase tracking-[0.55em] text-muted-foreground">Portfolio</p>
+          <p className="text-xs uppercase tracking-[0.5em] text-gold">Portfolio</p>
         </Reveal>
         <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="Selected frames" />
@@ -46,7 +65,8 @@ function Portfolio() {
         <Reveal delay={0.15}>
           <p className="mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
             A small cut of recent work — weddings, pre-weddings, portraits and film stills.
-            The full archive is best viewed at the studio, over chai.
+            Click any frame to view it large. The full archive is best viewed at the studio,
+            over chai.
           </p>
         </Reveal>
 
@@ -59,8 +79,8 @@ function Portfolio() {
                 aria-pressed={filter === f}
                 className={`rounded-full border px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${
                   filter === f
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    ? "border-gold bg-gold text-primary-foreground"
+                    : "border-border text-muted-foreground hover:border-gold hover:text-gold"
                 }`}
               >
                 {f}
@@ -74,7 +94,17 @@ function Portfolio() {
         <div key={filter} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, i) => (
             <ImageReveal key={item.title} delay={(i % 3) * 0.08} className="group">
-              <figure className="cursor-pointer" data-cursor>
+              <figure
+                role="button"
+                tabIndex={0}
+                aria-label={`View ${item.title} larger`}
+                onClick={() => setLightbox(i)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setLightbox(i);
+                }}
+                className="cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-gold"
+                data-cursor
+              >
                 <div className={`overflow-hidden ${aspectCycle[i % aspectCycle.length]}`}>
                   <img
                     src={item.src}
@@ -99,13 +129,74 @@ function Portfolio() {
         <Reveal className="mt-16 text-center">
           <Link
             to="/contact"
-            className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors duration-500 hover:text-foreground"
+            className="group inline-flex items-center gap-2 text-sm uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-gold"
           >
             Plan your shoot with us
-            <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:rotate-45" aria-hidden />
+            <ArrowUpRight
+              className="size-4 transition-transform duration-500 group-hover:rotate-45"
+              aria-hidden
+            />
           </Link>
         </Reveal>
       </section>
+
+      {/* Lightbox */}
+      {current && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={current.title}
+          className="fixed inset-0 z-[115] flex flex-col bg-background/95 backdrop-blur-sm"
+          onClick={() => setLightbox(null)}
+        >
+          <div className="flex items-center justify-between px-6 py-5 md:px-10">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+              {current.category} · {String((lightbox ?? 0) + 1).padStart(2, "0")} /{" "}
+              {String(items.length).padStart(2, "0")}
+            </span>
+            <button
+              aria-label="Close image"
+              onClick={() => setLightbox(null)}
+              className="flex size-10 items-center justify-center border border-border text-muted-foreground transition-colors duration-300 hover:border-foreground hover:text-foreground"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+
+          <div className="flex min-h-0 flex-1 items-center justify-center px-6 md:px-24">
+            <img
+              key={current.src}
+              src={current.src}
+              alt={`${current.title} — ${current.category} photography by Utsav Studio`}
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+
+          <div className="flex items-center justify-between px-6 py-5 md:px-10">
+            <span className="font-display text-xl font-light text-foreground md:text-2xl">
+              {current.title}
+            </span>
+            <span className="flex gap-3" onClick={(e) => e.stopPropagation()}>
+              <button
+                aria-label="Previous image"
+                onClick={() =>
+                  setLightbox((v) => (v === null ? v : (v - 1 + items.length) % items.length))
+                }
+                className="flex size-10 items-center justify-center border border-border text-muted-foreground transition-colors duration-300 hover:border-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="size-5" aria-hidden />
+              </button>
+              <button
+                aria-label="Next image"
+                onClick={() => setLightbox((v) => (v === null ? v : (v + 1) % items.length))}
+                className="flex size-10 items-center justify-center border border-border text-muted-foreground transition-colors duration-300 hover:border-foreground hover:text-foreground"
+              >
+                <ChevronRight className="size-5" aria-hidden />
+              </button>
+            </span>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
