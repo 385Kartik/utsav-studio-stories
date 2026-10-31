@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { navLinks, contact } from "@/lib/media";
+import logo from "@/assets/utsav-logo.png.asset.json";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -15,20 +16,21 @@ export function Nav() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-[110] mix-blend-difference">
-        <div className="flex items-center justify-between px-5 py-5 md:px-10">
+      <header className="fixed inset-x-0 top-0 z-[110]">
+        <div className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
           <Link
             to="/"
             onClick={() => setOpen(false)}
-            className="font-display text-2xl font-light leading-none tracking-tight text-foreground md:text-3xl"
+            className="block"
+            aria-label="Utsav Morjaria Photography — home"
           >
-            Utsav Studio
+            <img src={logo.url} alt="Utsav Morjaria Photography" className="h-12 w-auto md:h-16" />
           </Link>
           <button
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="group flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-foreground"
+            className="group flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-foreground mix-blend-difference"
           >
             <span className="hidden sm:inline">{open ? "Close" : "Menu"}</span>
             <span className="relative flex h-8 w-10 flex-col items-end justify-center gap-[7px]">
