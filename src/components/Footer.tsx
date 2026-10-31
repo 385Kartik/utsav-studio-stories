@@ -3,6 +3,7 @@ import { Instagram, Facebook, Youtube } from "lucide-react";
 import { Marquee } from "@/components/motion";
 import { OutlineAnchor } from "@/components/buttons";
 import { contact, navLinks } from "@/lib/media";
+import logo from "@/assets/utsav-logo.png.asset.json";
 
 export function Footer() {
   return (
@@ -15,9 +16,7 @@ export function Footer() {
 
       <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:px-10 md:py-20">
         <div>
-          <p className="font-display text-3xl font-light tracking-tight text-foreground md:text-4xl">
-            Utsav Studio
-          </p>
+          <img src={logo.url} alt="Utsav Morjaria Photography" className="h-20 w-auto md:h-24" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
             A photography &amp; cinematography studio in Mira Road East, capturing weddings,
             portraits and family stories since 1994.
