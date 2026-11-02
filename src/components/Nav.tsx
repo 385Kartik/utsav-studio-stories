@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-
 import { navLinks, contact } from "@/lib/media";
-import logo from "@/assets/utsav-logo.png.asset.json";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
@@ -14,38 +13,73 @@ export function Nav() {
     };
   }, [open]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-[110]">
-        <div className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
+      <header
+        className={`absolute inset-x-0 top-0 z-[110] transition-all duration-500 ease-out ${
+          scrolled
+            ? "bg-background/85 backdrop-blur-md border-b border-border/50 py-3 md:py-3.5 shadow-xl"
+            : "bg-transparent py-5 md:py-6"
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 md:px-12">
+          {/* Left: Company Logo with landing reveal */}
           <Link
             to="/"
             onClick={() => setOpen(false)}
-            className="block"
+            className="group flex items-center gap-3 transition-opacity duration-300 hover:opacity-90"
             aria-label="Utsav Morjaria Photography — home"
           >
-            <img src={logo.url} alt="Utsav Morjaria Photography" className="h-12 w-auto md:h-16" />
+            <img
+              src="/utsav-logo.png"
+              alt="Utsav Morjaria Photography"
+              className="h-13 md:h-16 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(212,163,89,0.45)] transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="hidden sm:flex flex-col">
+              <span className="text-[9px] uppercase tracking-[0.35em] text-gold font-mono font-medium">EST. 1994</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/80 font-light">Mira Road East</span>
+            </div>
           </Link>
-          <button
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label={open ? "Close menu" : "Open menu"}
-            className="group flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-foreground mix-blend-difference"
-          >
-            <span className="hidden sm:inline">{open ? "Close" : "Menu"}</span>
-            <span className="relative flex h-8 w-10 flex-col items-end justify-center gap-[7px]">
-              <span
-                className={`h-[2px] bg-foreground transition-all duration-300 ${
-                  open ? "w-8 translate-y-[4.5px] rotate-45" : "w-8 group-hover:w-5"
-                }`}
-              />
-              <span
-                className={`h-[2px] bg-foreground transition-all duration-300 ${
-                  open ? "w-8 -translate-y-[4.5px] -rotate-45" : "w-5 group-hover:w-8"
-                }`}
-              />
-            </span>
-          </button>
+
+          {/* Right: Mistral-style Contact link + Menu button */}
+          <div className="flex items-center gap-6 md:gap-10">
+            <Link
+              to="/contact"
+              onClick={() => setOpen(false)}
+              className="hidden sm:inline-block text-xs uppercase tracking-[0.35em] text-foreground/80 transition-colors duration-300 hover:text-foreground"
+            >
+              Contact
+            </Link>
+
+            <button
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-label={open ? "Close menu" : "Open menu"}
+              className="group flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-foreground mix-blend-difference"
+            >
+              <span className="hidden md:inline">{open ? "Close" : "Menu"}</span>
+              <span className="relative flex h-8 w-8 flex-col items-end justify-center gap-[6px]">
+                <span
+                  className={`h-[2px] bg-foreground transition-all duration-300 ${
+                    open ? "w-6 translate-y-[4px] rotate-45" : "w-6 group-hover:w-4"
+                  }`}
+                />
+                <span
+                  className={`h-[2px] bg-foreground transition-all duration-300 ${
+                    open ? "w-6 -translate-y-[4px] -rotate-45" : "w-4 group-hover:w-6"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -69,40 +103,26 @@ export function Nav() {
                 transition: "opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
                 transitionDelay: open ? `${250 + i * 70}ms` : "0ms",
                 opacity: open ? 1 : 0,
-                transform: open ? "translateY(0)" : "translateY(110%)",
+                transform: open ? "translateY(0)" : "translateY(100%)",
               }}
             >
               <Link
                 to={link.to}
                 onClick={() => setOpen(false)}
-                activeOptions={{ includeSearch: false }}
-                className="group flex items-baseline gap-4 font-display text-5xl tracking-tight text-foreground transition-colors duration-300 hover:text-gold md:text-8xl"
+                className="font-display text-4xl font-light text-foreground transition-colors duration-300 hover:text-foreground/70 md:text-7xl"
               >
-                <span className="w-10 text-sm font-grotesk uppercase tracking-[0.3em] text-muted-foreground md:w-16">
-                  0{i + 1}
-                </span>
-                <span className="transition-transform duration-500 group-hover:translate-x-3">
-                  {link.label}
-                </span>
+                {link.label}
               </Link>
             </li>
           ))}
         </ul>
 
-        <div
-          className="flex flex-col gap-4 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:items-end md:justify-between"
-          style={{
-            transition: "opacity 0.6s ease",
-            transitionDelay: open ? "600ms" : "0ms",
-            opacity: open ? 1 : 0,
-          }}
-        >
-          <div className="flex flex-col gap-1">
-            <span className="uppercase tracking-[0.3em] text-gold">Studio</span>
-            <span>Shanti Nagar, Mira Road East</span>
-            <span>Open Tue–Sun · 11:00 AM – 9:30 PM</span>
-          </div>
-          <a href={contact.phoneHref} className="font-display text-2xl text-foreground md:text-3xl">
+        <div className="flex flex-col gap-4 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <p>Mira Road East, Mumbai · Est. 1994</p>
+          <a
+            href={contact.phoneHref}
+            className="tracking-wider transition-colors duration-300 hover:text-foreground"
+          >
             {contact.phoneDisplay}
           </a>
         </div>

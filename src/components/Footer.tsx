@@ -3,7 +3,6 @@ import { Instagram, Facebook, Youtube } from "lucide-react";
 import { Marquee } from "@/components/motion";
 import { OutlineAnchor } from "@/components/buttons";
 import { contact, navLinks } from "@/lib/media";
-import logo from "@/assets/utsav-logo.png.asset.json";
 
 export function Footer() {
   return (
@@ -11,13 +10,14 @@ export function Footer() {
       <Marquee
         items={["Utsav Studio", "Est. 1994", "Mira Road East", "Photography & Films"]}
         duration={38}
+        separator="·"
         className="border-b border-border py-6 font-display text-4xl font-light text-foreground/80 md:py-8 md:text-6xl"
       />
 
       <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:px-10 md:py-20">
         <div>
-          <img src={logo.url} alt="Utsav Morjaria Photography" className="h-20 w-auto md:h-24" />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          <img src="/utsav-logo.png" alt="Utsav Morjaria Photography" className="h-16 w-auto object-contain md:h-20" />
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
             A photography &amp; cinematography studio in Mira Road East, capturing weddings,
             portraits and family stories since 1994.
           </p>
