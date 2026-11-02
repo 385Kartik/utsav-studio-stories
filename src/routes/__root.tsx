@@ -13,7 +13,7 @@ import { MessageCircle } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SmoothScroll, Cursor } from "@/components/motion";
+import { SmoothScroll } from "@/components/motion";
 import { Preloader } from "@/components/Preloader";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -92,11 +92,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+                        { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300..600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
@@ -128,7 +128,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SmoothScroll>
-        <Cursor />
+
         <Preloader />
         <Nav />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
