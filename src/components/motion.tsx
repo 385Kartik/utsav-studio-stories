@@ -1,9 +1,11 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { animate, stagger, scrambleText, createTimeline } from "animejs";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
+import { AnimeStaggerGrid } from "@/components/AnimeStaggerGrid";
 import {
   useEffect,
   useRef,
@@ -649,9 +651,103 @@ export function CurvedReelScrollExperience({
 
       // Initial layout pass
       applyFrame(0);
+
+      // ── Anime.js kinetic reveal: badge first ──────────────────────────────
+      animate("[data-hero-badge]", {
+        opacity: [0, 1],
+        translateY: [10, 0],
+        delay: 1800,
+        duration: 700,
+        ease: "outExpo",
+      });
+
+      // ── Scramble text on hero title — the animejs.com signature effect ───
+      // The hero h1 uses [data-hero-letter] spans. We scramble the whole title
+      // by targeting the wrapper span [data-hero-scramble] element.
+      const heroScrambleEl = container.querySelector<HTMLElement>("[data-hero-scramble]");
+      if (heroScrambleEl) {
+        heroScrambleEl.style.opacity = "1";
+        animate(heroScrambleEl, {
+          innerHTML: scrambleText({
+            text: "Utsav Studio",
+            chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ#@!%&",
+            speed: 0.7,
+            revealDelay: 200,
+          }),
+          delay: 1750,
+          duration: 1400,
+          ease: "linear",
+        });
+      } else {
+        // Fallback: letter-by-letter kinetic stagger
+        animate("[data-hero-letter]", {
+          translateY: ["115%", "0%"],
+          opacity: [0, 1],
+          delay: stagger(55, { start: 1750 }),
+          duration: 820,
+          ease: "outExpo",
+        });
+      }
+
+      // ── Divider line ──────────────────────────────────────────────────────
+      animate("[data-hero-line]", {
+        scaleX: [0, 1],
+        opacity: [0, 1],
+        delay: 2600,
+        duration: 700,
+        ease: "outQuad",
+      });
+
+      // ── Sub-label ─────────────────────────────────────────────────────────
+      animate("[data-hero-sub]", {
+        translateY: [20, 0],
+        opacity: [0, 1],
+        delay: 2750,
+        duration: 700,
+        ease: "outExpo",
+      });
     }, container);
 
-    return () => ctx.revert();
+    // 2.5D interactive mouse parallax on hero image & typography
+    let animHeroImg: ReturnType<typeof animate> | null = null;
+    let animHeroText: ReturnType<typeof animate> | null = null;
+
+    const onHeroMouseMove = (e: MouseEvent) => {
+      if (window.scrollY > window.innerHeight * 0.4) return;
+      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
+      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
+
+      if (heroImg) {
+        animHeroImg?.pause();
+        animHeroImg = animate(heroImg, {
+          translateX: normX * -28,
+          translateY: normY * -18,
+          duration: 700,
+          ease: "outCubic",
+        });
+      }
+
+      if (heroText) {
+        animHeroText?.pause();
+        animHeroText = animate(heroText, {
+          rotateY: normX * 7,
+          rotateX: normY * -7,
+          translateX: normX * 14,
+          translateY: normY * 10,
+          duration: 600,
+          ease: "outCubic",
+        });
+      }
+    };
+
+    window.addEventListener("mousemove", onHeroMouseMove, { passive: true });
+
+    return () => {
+      ctx.revert();
+      animHeroImg?.pause();
+      animHeroText?.pause();
+      window.removeEventListener("mousemove", onHeroMouseMove);
+    };
   }, [items]);
 
   // Gallery items for ribbon (14 cards) and cylinder (18 cards)
@@ -667,23 +763,6 @@ export function CurvedReelScrollExperience({
         {/* Subtle cinematic backlight */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-gold/5 blur-[140px]" />
 
-        {/* Ambient floating sparkles across the scene */}
-        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-          {Array.from({ length: 28 }).map((_, i) => (
-            <span
-              key={i}
-              className="sparkle-particle"
-              style={{
-                width: `${(i % 3) * 2.5 + 3}px`,
-                height: `${(i % 3) * 2.5 + 3}px`,
-                left: `${(i * 17) % 96}%`,
-                top: `${(i * 23) % 94}%`,
-                animation: `sparkle-float ${4 + (i % 4)}s ease-in-out ${(i % 5) * 0.7}s infinite`,
-              }}
-            />
-          ))}
-        </div>
-
         {/* ------------------------------------------------------------ */}
         {/* STAGE 1: Hero View with 3D Page-Fold & Squeeze Animation     */}
         {/* ------------------------------------------------------------ */}
@@ -692,27 +771,38 @@ export function CurvedReelScrollExperience({
           className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 will-change-transform"
           style={{ transformOrigin: "center top", transformStyle: "preserve-3d" }}
         >
+          {/* Stagger dot grid — animejs.com signature, full-hero coverage */}
+          <AnimeStaggerGrid />
+
           {heroImage && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <img
                 ref={heroImgRef}
                 src={heroImage}
                 alt="A candid wedding moment photographed by Utsav Studio"
-                className="w-full h-full object-cover scale-105 opacity-35 mix-blend-luminosity filter contrast-125 transition-transform duration-75"
+                className="w-full h-full object-cover scale-105 opacity-35 mix-blend-luminosity filter contrast-125 transition-transform duration-75 will-change-transform"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/90" />
             </div>
           )}
 
-          <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75">
-            <p className="mb-4 text-[11px] uppercase tracking-[0.6em] text-gold font-mono font-medium">
+          <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75 will-change-transform">
+            <p data-hero-badge className="mb-4 text-[11px] uppercase tracking-[0.6em] text-gold font-mono font-medium opacity-0">
               Mira Road East · Est. 1994
             </p>
             <h1 className="font-display text-[14vw] md:text-[9.5vw] font-light leading-[0.96] tracking-tight text-foreground">
-              Utsav Studio
+              {/* Single element for scrambleText — animejs rewrites innerHTML */}
+              <span
+                data-hero-scramble
+                className="inline-block will-change-transform"
+                style={{ opacity: 0 }}
+                aria-label="Utsav Studio"
+              >
+                Utsav Studio
+              </span>
             </h1>
-            <span className="mt-6 h-px w-20 bg-gold/60" aria-hidden />
-            <p className="mt-6 text-xs uppercase tracking-[0.45em] text-muted-foreground font-light">
+            <span data-hero-line className="mt-6 h-px w-20 bg-gold/60 origin-center will-change-transform opacity-0" aria-hidden />
+            <p data-hero-sub className="mt-6 text-xs uppercase tracking-[0.45em] text-muted-foreground font-light will-change-transform opacity-0">
               Photography &amp; Cinematography
             </p>
           </div>

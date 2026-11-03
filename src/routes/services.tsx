@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
+import { AnimeTiltCard } from "@/components/AnimeTiltCard";
 import { contact, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/services")({
@@ -176,10 +177,17 @@ function Services() {
           </h2>
           <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {process.map((p, i) => (
-              <Reveal key={p.no} delay={i * 0.08} className="flex flex-col gap-4">
-                <span className="font-display text-4xl font-light text-foreground/25">{p.no}</span>
-                <h3 className="font-display text-xl tracking-tight text-foreground">{p.t}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{p.d}</p>
+              <Reveal key={p.no} delay={i * 0.08} className="flex flex-col">
+                <AnimeTiltCard
+                  maxTilt={5}
+                  scale={1.02}
+                  hasShutterFlash={false}
+                  className="p-6 rounded-md border border-border/70 bg-card/40 backdrop-blur-xs transition-colors hover:border-gold/60 flex flex-col gap-3 h-full"
+                >
+                  <span className="font-display text-4xl font-light text-foreground/25">{p.no}</span>
+                  <h3 className="font-display text-xl tracking-tight text-foreground">{p.t}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{p.d}</p>
+                </AnimeTiltCard>
               </Reveal>
             ))}
           </div>

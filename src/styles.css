@@ -1,11 +1,11 @@
-@import "tailwindcss" source(none);
+﻿@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Utsav Studio design system — cinematic editorial.
+ * Utsav Studio design system â€” cinematic editorial.
  * Dark warm charcoal canvas, cream ink, single amber "tungsten light" accent.
  * All colors oklch. Display serif: Fraunces. Text/grotesk: Space Grotesk.
  */
@@ -71,7 +71,7 @@
 }
 
 /*
- * Light editorial theme — applied per page via the `.theme-light` wrapper
+ * Light editorial theme â€” applied per page via the `.theme-light` wrapper
  * (Services, About, Contact). Same token names, warm cream canvas + ink.
  * `.theme-dark` restores the dark showcase palette inside a light page
  * (e.g. the cinematic CTA band).
@@ -286,3 +286,22 @@
   filter: drop-shadow(0 0 6px rgba(243, 223, 186, 0.6));
   pointer-events: none;
 }
+
+/* ── Preloader scan line ─────────────────────────────────── */
+@keyframes preloader-scan {
+  from { left: 0%; opacity: 1; }
+  to   { left: 100%; opacity: 0.6; }
+}
+
+/* ── Scramble flash color cycling during scramble ─────────── */
+@keyframes scramble-color {
+  0%   { color: var(--gold); }
+  50%  { color: var(--foreground); }
+  100% { color: var(--foreground); }
+}
+
+/* ── Magnetic cursor expand ring ─────────────────────────── */
+.cursor-native-none * { cursor: none !important; }
+
+/* ── AnimeStaggerGrid pointer events override ─────────────── */
+.anime-grid-interactive { pointer-events: auto !important; }

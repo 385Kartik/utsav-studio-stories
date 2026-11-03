@@ -1,25 +1,53 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { animate, scrambleText, stagger } from "animejs";
 import { navLinks, contact } from "@/lib/media";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const prevOpen = useRef(false);
 
+  // Lock scroll when nav open
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.documentElement.style.overflow = "";
-    };
+    return () => { document.documentElement.style.overflow = ""; };
   }, [open]);
 
+  // Scroll detection
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ── animejs scramble effect when nav opens ──────────────────────────────
+  useEffect(() => {
+    if (!navRef.current) return;
+    if (open && !prevOpen.current) {
+      // Nav just opened — scramble each link text in staggered sequence
+      const links = Array.from(
+        navRef.current.querySelectorAll<HTMLElement>("[data-nav-link-text]")
+      );
+      links.forEach((el, i) => {
+        const originalText = el.getAttribute("data-original") ?? el.textContent ?? "";
+        setTimeout(() => {
+          animate(el, {
+            innerHTML: scrambleText({
+              text: originalText,
+              chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+              speed: 0.65,
+              revealDelay: 80,
+            }),
+            duration: 900,
+            ease: "linear",
+          });
+        }, 280 + i * 90);
+      });
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   return (
     <>
@@ -31,7 +59,7 @@ export function Nav() {
         }`}
       >
         <div className="flex items-center justify-between px-6 md:px-12">
-          {/* Left: Company Logo with landing reveal */}
+          {/* Left: Company Logo */}
           <Link
             to="/"
             onClick={() => setOpen(false)}
@@ -49,7 +77,7 @@ export function Nav() {
             </div>
           </Link>
 
-          {/* Right: Mistral-style Contact link + Menu button */}
+          {/* Right: Contact + Menu */}
           <div className="flex items-center gap-6 md:gap-10">
             <Link
               to="/contact"
@@ -84,6 +112,7 @@ export function Nav() {
       </header>
 
       <nav
+        ref={navRef}
         aria-label="Main navigation"
         className="grain-surface fixed inset-0 z-[105] flex flex-col justify-between bg-background px-6 pb-8 pt-28 md:px-14"
         style={{
@@ -100,18 +129,26 @@ export function Nav() {
               key={link.to}
               className="overflow-hidden"
               style={{
-                transition: "opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
-                transitionDelay: open ? `${250 + i * 70}ms` : "0ms",
+                transition: "opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)",
+                transitionDelay: open ? `${220 + i * 65}ms` : "0ms",
                 opacity: open ? 1 : 0,
-                transform: open ? "translateY(0)" : "translateY(100%)",
+                transform: open ? "translateY(0)" : "translateY(110%)",
               }}
             >
               <Link
                 to={link.to}
                 onClick={() => setOpen(false)}
-                className="font-display text-4xl font-light text-foreground transition-colors duration-300 hover:text-foreground/70 md:text-7xl"
+                className="group relative inline-block font-display text-4xl font-light text-foreground transition-colors duration-300 hover:text-foreground/70 md:text-7xl"
               >
-                {link.label}
+                {/* The actual text element that gets scrambled */}
+                <span
+                  data-nav-link-text
+                  data-original={link.label}
+                >
+                  {link.label}
+                </span>
+                {/* Underline swipe on hover */}
+                <span className="absolute bottom-0 left-0 h-px w-0 bg-gold transition-all duration-500 group-hover:w-full" />
               </Link>
             </li>
           ))}

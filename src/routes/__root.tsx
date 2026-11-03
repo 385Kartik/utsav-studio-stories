@@ -15,8 +15,10 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SmoothScroll } from "@/components/motion";
 import { Preloader } from "@/components/Preloader";
+import { CinematicCursor } from "@/components/CinematicCursor";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { AnimeMagneticButton } from "@/components/AnimeMagneticButton";
 import { contact } from "@/lib/media";
 
 function NotFoundComponent() {
@@ -128,21 +130,25 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SmoothScroll>
-
+        <CinematicCursor />
         <Preloader />
         <Nav />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Footer />
-        <a
-          href={contact.whatsapp}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Chat on WhatsApp"
-          className="fixed bottom-6 right-6 z-[70] flex size-14 items-center justify-center border border-border bg-card/90 text-gold backdrop-blur-sm transition-all duration-300 hover:border-gold hover:text-gold"
-        >
-          <MessageCircle className="size-6" aria-hidden />
-        </a>
+        <div className="fixed bottom-6 right-6 z-[80]">
+          <AnimeMagneticButton distance={0.4}>
+            <a
+              href={contact.whatsapp}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Chat on WhatsApp"
+              className="flex size-14 items-center justify-center border border-border bg-card/90 text-gold backdrop-blur-sm transition-all duration-300 hover:border-gold hover:text-gold shadow-xl"
+            >
+              <MessageCircle className="size-6" aria-hidden />
+            </a>
+          </AnimeMagneticButton>
+        </div>
       </SmoothScroll>
     </QueryClientProvider>
   );

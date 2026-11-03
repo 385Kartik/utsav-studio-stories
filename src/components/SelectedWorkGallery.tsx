@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { animate } from "animejs";
 import { selectedWorkItems, galleryItems, type GalleryItem } from "@/lib/media";
 import { OutlineButton } from "@/components/buttons";
+import { AnimeTiltCard } from "@/components/AnimeTiltCard";
 
 export function SelectedWorkGallery() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -12,6 +14,7 @@ export function SelectedWorkGallery() {
   const col2Ref = useRef<HTMLDivElement>(null);
   const col3Ref = useRef<HTMLDivElement>(null);
   const col4Ref = useRef<HTMLDivElement>(null);
+  const lightboxImgRef = useRef<HTMLImageElement>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   useEffect(() => {
@@ -75,6 +78,18 @@ export function SelectedWorkGallery() {
     };
   }, []);
 
+  // Animate lightbox image zoom-in with Anime.js on change
+  useEffect(() => {
+    if (lightbox !== null && lightboxImgRef.current) {
+      animate(lightboxImgRef.current, {
+        scale: [0.92, 1],
+        opacity: [0, 1],
+        duration: 380,
+        ease: "outQuad",
+      });
+    }
+  }, [lightbox]);
+
   const current = lightbox !== null ? selectedWorkItems[lightbox] : null;
 
   const col1 = selectedWorkItems.filter((_, i) => i % 4 === 0);
@@ -84,36 +99,43 @@ export function SelectedWorkGallery() {
 
   const renderCard = (item: GalleryItem, globalIdx: number, aspect: string) => (
     <div key={globalIdx} className="group relative flex flex-col mb-5 md:mb-7">
-      <div
-        role="button"
-        tabIndex={0}
+      <AnimeTiltCard
         onClick={() => setLightbox(globalIdx)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setLightbox(globalIdx);
-        }}
-        className={`relative w-full overflow-hidden rounded-md bg-card/70 border border-border/70 shadow-xl cursor-pointer ${aspect}`}
+        className="rounded-md"
+        maxTilt={8}
+        scale={1.03}
+        hasShutterFlash={true}
       >
-        <img
-          src={item.src}
-          alt={item.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setLightbox(globalIdx);
+          }}
+          className={`relative w-full overflow-hidden rounded-md bg-card/70 border border-border/70 shadow-xl cursor-pointer ${aspect}`}
+        >
+          <img
+            src={item.src}
+            alt={item.title}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-1 rounded bg-background/90 text-gold border border-border/80">
-            {item.category}
-          </span>
-        </div>
+          <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-1 rounded bg-background/90 text-gold border border-border/80">
+              {item.category}
+            </span>
+          </div>
 
-        <div className="absolute bottom-3 inset-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <p className="font-display text-sm text-foreground truncate">{item.title}</p>
-          {item.subtitle && (
-            <p className="text-[10px] text-muted-foreground truncate">{item.subtitle}</p>
-          )}
+          <div className="absolute bottom-3 inset-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <p className="font-display text-sm text-foreground truncate">{item.title}</p>
+            {item.subtitle && (
+              <p className="text-[10px] text-muted-foreground truncate">{item.subtitle}</p>
+            )}
+          </div>
         </div>
-      </div>
+      </AnimeTiltCard>
 
       <div className="mt-2 px-1 flex items-baseline justify-between text-[11px]">
         <span className="font-display text-foreground/90 truncate">{item.title}</span>
@@ -131,8 +153,9 @@ export function SelectedWorkGallery() {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-background pt-8 pb-16 md:pt-12 md:pb-24 border-t border-border/40"
+      className="relative bg-background pt-8 pb-16 md:pt-12 md:pb-24 border-t border-border/40 overflow-hidden"
     >
+
       {/* ------------------------------------------------------------ */}
       {/* Scroll Motion Line: Archive Showcase                          */}
       {/* ------------------------------------------------------------ */}
@@ -140,71 +163,106 @@ export function SelectedWorkGallery() {
         <div className="relative flex items-center justify-center">
           <div
             ref={transitionLineRef}
-            className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent transition-transform duration-75 will-change-transform"
-            style={{ transformOrigin: "center" }}
+            className="h-[1px] w-full max-w-2xl bg-gradient-to-r from-transparent via-gold/60 to-transparent transition-transform duration-75 origin-center will-change-transform"
           />
-          <div className="absolute flex items-center gap-2 bg-background px-4 py-1 border border-border/80 rounded-full shadow-md text-[10px] uppercase tracking-[0.35em] text-gold font-mono">
-            <span className="size-1.5 rounded-full bg-gold animate-pulse" />
-            <span>Archive Showcase</span>
-          </div>
         </div>
       </div>
 
       {/* ------------------------------------------------------------ */}
-      {/* Background text "Selected Work" with scroll-driven fade out   */}
+      {/* Fading Background Text: "Selected Work"                      */}
       {/* ------------------------------------------------------------ */}
-      <div className="pointer-events-none sticky top-[24vh] z-0 flex flex-col items-center justify-center text-center px-4 will-change-transform select-none">
-        <div ref={bgTextRef} className="flex flex-col items-center justify-center transition-all duration-75">
-          <h2 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-[11vw] font-light leading-none tracking-tight text-foreground/75">
-            Selected Work
+      <div className="pointer-events-none sticky top-20 z-0 flex justify-center overflow-hidden py-4 select-none">
+        <div
+          ref={bgTextRef}
+          className="font-display text-[14vw] md:text-[11vw] font-bold uppercase tracking-tight text-foreground/25 whitespace-nowrap will-change-transform transition-transform duration-75"
+        >
+          Selected Work
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------ */}
+      {/* Section Header Controls                                      */}
+      {/* ------------------------------------------------------------ */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span className="text-xs uppercase tracking-[0.4em] font-mono text-gold">
+            Archive Highlights
+          </span>
+          <h2 className="mt-1 font-display text-3xl md:text-5xl font-light text-foreground tracking-tight">
+            Curated Frames Collection
           </h2>
         </div>
-      </div>
-
-      {/* ------------------------------------------------------------ */}
-      {/* Foreground Photos Grid (Staggered Column Parallax Scroll)    */}
-      {/* ------------------------------------------------------------ */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 md:px-10 mt-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 items-start">
-          <div ref={col1Ref} className="flex flex-col will-change-transform">
-            {col1.map((item, idx) =>
-              renderCard(item, idx * 4, idx % 2 === 0 ? "aspect-[3/4]" : "aspect-[4/5]"),
-            )}
-          </div>
-
-          <div ref={col2Ref} className="flex flex-col will-change-transform md:pt-8">
-            {col2.map((item, idx) =>
-              renderCard(item, idx * 4 + 1, idx % 2 === 0 ? "aspect-[4/5]" : "aspect-[3/4]"),
-            )}
-          </div>
-
-          <div ref={col3Ref} className="flex flex-col will-change-transform md:pt-4">
-            {col3.map((item, idx) =>
-              renderCard(item, idx * 4 + 2, idx % 2 === 0 ? "aspect-square" : "aspect-[4/5]"),
-            )}
-          </div>
-
-          <div ref={col4Ref} className="flex flex-col will-change-transform md:pt-12">
-            {col4.map((item, idx) =>
-              renderCard(item, idx * 4 + 3, idx % 2 === 0 ? "aspect-[3/4]" : "aspect-square"),
-            )}
-          </div>
-        </div>
-
-        <div className="mt-16 flex justify-center">
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-muted-foreground font-mono">
+            36 FRAMES · 30 YEARS ARCHIVE
+          </span>
           <OutlineButton to="/portfolio">
-            Explore All Categories ({galleryItems.length}+ Frames)
+            Explore All
           </OutlineButton>
         </div>
       </div>
 
-      {/* Lightbox for full-size viewing */}
+      {/* ------------------------------------------------------------ */}
+      {/* Multi-Column Masonry Grid with 4 Differently Paced Speeds     */}
+      {/* ------------------------------------------------------------ */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {/* Column 1 - Moderate upward float */}
+          <div ref={col1Ref} className="will-change-transform">
+            {col1.map((item, i) => {
+              const globalIdx = i * 4;
+              const aspects = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]"];
+              return renderCard(item, globalIdx, aspects[i % aspects.length]);
+            })}
+          </div>
+
+          {/* Column 2 - Downward lag */}
+          <div ref={col2Ref} className="will-change-transform pt-6 md:pt-14">
+            {col2.map((item, i) => {
+              const globalIdx = i * 4 + 1;
+              const aspects = ["aspect-[4/5]", "aspect-[3/4]", "aspect-square"];
+              return renderCard(item, globalIdx, aspects[i % aspects.length]);
+            })}
+          </div>
+
+          {/* Column 3 - Fast upward float */}
+          <div ref={col3Ref} className="will-change-transform pt-2 md:pt-6">
+            {col3.map((item, i) => {
+              const globalIdx = i * 4 + 2;
+              const aspects = ["aspect-square", "aspect-[3/4]", "aspect-[4/5]"];
+              return renderCard(item, globalIdx, aspects[i % aspects.length]);
+            })}
+          </div>
+
+          {/* Column 4 - Moderate downward lag */}
+          <div ref={col4Ref} className="will-change-transform pt-8 md:pt-20">
+            {col4.map((item, i) => {
+              const globalIdx = i * 4 + 3;
+              const aspects = ["aspect-[3/4]", "aspect-[4/5]", "aspect-square"];
+              return renderCard(item, globalIdx, aspects[i % aspects.length]);
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------ */}
+      {/* Bottom CTA to Full Portfolio                                 */}
+      {/* ------------------------------------------------------------ */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 mt-16 md:mt-24 text-center">
+        <OutlineButton to="/portfolio">
+          View all categories in full archive
+        </OutlineButton>
+      </div>
+
+      {/* ------------------------------------------------------------ */}
+      {/* Lightbox Modal with Lens Iris Appearance                     */}
+      {/* ------------------------------------------------------------ */}
       {current && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={current.title}
-          className="fixed inset-0 z-[120] flex flex-col bg-background/95 backdrop-blur-md"
+          className="fixed inset-0 z-[125] flex flex-col bg-background/95 backdrop-blur-md"
           onClick={() => setLightbox(null)}
         >
           <div className="flex items-center justify-between px-6 py-5 md:px-10">
@@ -223,6 +281,7 @@ export function SelectedWorkGallery() {
 
           <div className="flex min-h-0 flex-1 items-center justify-center px-6 md:px-24">
             <img
+              ref={lightboxImgRef}
               key={current.src}
               src={current.src}
               alt={current.title}

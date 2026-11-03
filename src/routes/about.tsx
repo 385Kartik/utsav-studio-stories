@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, Aperture, Camera, Film } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
+import { AnimeTiltCard } from "@/components/AnimeTiltCard";
 import { media } from "@/lib/media";
 import { CtaBand } from "./index";
 
@@ -122,10 +123,17 @@ function About() {
               d: "Editing, custom frames and album design completed in-house, down to the last page.",
             },
           ].map((v, i) => (
-            <Reveal key={v.t} delay={i * 0.1} className="flex flex-col gap-4">
-              <v.Icon className="size-6 text-muted-foreground" aria-hidden />
-              <h3 className="font-display text-2xl tracking-tight text-foreground">{v.t}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{v.d}</p>
+            <Reveal key={v.t} delay={i * 0.1} className="flex flex-col">
+              <AnimeTiltCard
+                maxTilt={6}
+                scale={1.02}
+                hasShutterFlash={false}
+                className="p-7 rounded-md border border-border/70 bg-card/60 backdrop-blur-xs flex flex-col gap-4 h-full transition-colors hover:border-gold/60"
+              >
+                <v.Icon className="size-6 text-gold/80" aria-hidden />
+                <h3 className="font-display text-2xl tracking-tight text-foreground">{v.t}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{v.d}</p>
+              </AnimeTiltCard>
             </Reveal>
           ))}
         </div>

@@ -13,6 +13,7 @@ import {
 import { Eyebrow, OutlineButton } from "@/components/buttons";
 import { RollingNumber } from "@/components/RollingNumber";
 import { SelectedWorkGallery } from "@/components/SelectedWorkGallery";
+import { CinematicMarquee } from "@/components/CinematicMarquee";
 import { galleryItems, media, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/")({
@@ -43,6 +44,9 @@ function Index() {
     <main>
       {/* 3D Curved Serpentine & Cylinder Experience */}
       <CurvedReelScrollExperience items={galleryItems} heroImage={media.hero} />
+
+      {/* Infinite Cinematic Marquee Ticker */}
+      <CinematicMarquee />
 
       {/* Services Section with clickable categories */}
       <ServicesScroller />
@@ -256,8 +260,9 @@ function ServicesScroller() {
             <div
               key={g.no}
               data-service-row
-              className={`border-b border-border py-8 transition-opacity duration-700 md:py-11 ${
-                active === i ? "opacity-100" : "opacity-35 md:opacity-30"
+              onMouseEnter={() => setActive(i)}
+              className={`border-b border-border py-8 transition-all duration-500 cursor-pointer md:py-11 ${
+                active === i ? "opacity-100 border-gold/40 pl-2 md:pl-3" : "opacity-35 md:opacity-30"
               }`}
             >
               <Link

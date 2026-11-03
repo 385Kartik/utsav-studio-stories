@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { AnimatedTitle, ImageReveal, Reveal } from "@/components/motion";
+import { animate, stagger } from "animejs";
+import { AnimatedTitle, Reveal } from "@/components/motion";
 import { galleryItems } from "@/lib/media";
+import { AnimeTiltCard } from "@/components/AnimeTiltCard";
 
 interface PortfolioSearch {
   category?: string;
@@ -64,6 +66,8 @@ function Portfolio() {
     normalizeCategory(search.category),
   );
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const lightboxImgRef = useRef<HTMLImageElement>(null);
 
   // Sync state if URL search param changes
   useEffect(() => {
@@ -82,6 +86,35 @@ function Portfolio() {
 
   const items =
     filter === "All" ? galleryItems : galleryItems.filter((g) => g.category === filter);
+
+  // Anime.js Staggered Wave animation when filter changes
+  useEffect(() => {
+    if (gridRef.current) {
+      const cards = gridRef.current.children;
+      if (cards.length > 0) {
+        animate(cards, {
+          opacity: [0, 1],
+          translateY: [35, 0],
+          scale: [0.95, 1],
+          delay: stagger(45),
+          duration: 520,
+          ease: "outQuad",
+        });
+      }
+    }
+  }, [filter]);
+
+  // Anime.js Lightbox Zoom on open or index change
+  useEffect(() => {
+    if (lightbox !== null && lightboxImgRef.current) {
+      animate(lightboxImgRef.current, {
+        scale: [0.92, 1],
+        opacity: [0, 1],
+        duration: 360,
+        ease: "outQuad",
+      });
+    }
+  }, [lightbox]);
 
   useEffect(() => {
     if (lightbox === null) return;
@@ -102,8 +135,9 @@ function Portfolio() {
   const current = lightbox === null ? null : items[lightbox];
 
   return (
-    <main>
-      <section className="mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
+    <main className="relative overflow-hidden">
+
+      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
           <p className="text-xs uppercase tracking-[0.5em] text-gold font-mono">Portfolio Archive</p>
         </Reveal>
@@ -126,7 +160,7 @@ function Portfolio() {
                 aria-pressed={filter === f}
                 className={`rounded-full border px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${
                   filter === f
-                    ? "border-gold bg-gold text-primary-foreground font-medium"
+                    ? "border-gold bg-gold text-primary-foreground font-medium shadow-[0_0_15px_rgba(212,163,89,0.3)]"
                     : "border-border text-muted-foreground hover:border-gold hover:text-gold"
                 }`}
               >
@@ -140,46 +174,52 @@ function Portfolio() {
         </Reveal>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-[12vh] md:px-10">
-        <div key={filter} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-[12vh] md:px-10">
+        <div ref={gridRef} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, i) => (
-            <ImageReveal key={`${item.title}-${i}`} delay={(i % 3) * 0.08} className="group">
-              <figure
-                role="button"
-                tabIndex={0}
-                aria-label={`View ${item.title} larger`}
+            <div key={`${item.title}-${i}`} className="group will-change-transform">
+              <AnimeTiltCard
                 onClick={() => setLightbox(i)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setLightbox(i);
-                }}
-                className="cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-gold"
-                data-cursor
+                maxTilt={6}
+                scale={1.025}
+                hasShutterFlash={true}
               >
-                <div className={`overflow-hidden rounded-sm bg-muted/20 ${aspectCycle[i % aspectCycle.length]}`}>
-                  <img
-                    src={item.src}
-                    alt={`${item.title} — ${item.category} photography by Utsav Studio`}
-                    loading="lazy"
-                    width={1088}
-                    height={1360}
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                </div>
-                <figcaption className="flex items-baseline justify-between border-b border-border py-4">
-                  <div>
-                    <span className="font-display text-xl text-foreground block">{item.title}</span>
-                    {item.subtitle && (
-                      <span className="text-xs text-muted-foreground/80 mt-0.5 block">
-                        {item.subtitle}
-                      </span>
-                    )}
+                <figure
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View ${item.title} larger`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setLightbox(i);
+                  }}
+                  className="cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-gold"
+                  data-cursor
+                >
+                  <div className={`overflow-hidden rounded-sm bg-muted/20 ${aspectCycle[i % aspectCycle.length]}`}>
+                    <img
+                      src={item.src}
+                      alt={`${item.title} — ${item.category} photography by Utsav Studio`}
+                      loading="lazy"
+                      width={1088}
+                      height={1360}
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
                   </div>
-                  <span className="text-xs uppercase tracking-[0.25em] text-gold font-mono shrink-0 ml-4">
-                    {item.category}
-                  </span>
-                </figcaption>
-              </figure>
-            </ImageReveal>
+                  <figcaption className="flex items-baseline justify-between border-b border-border py-4">
+                    <div>
+                      <span className="font-display text-xl text-foreground block">{item.title}</span>
+                      {item.subtitle && (
+                        <span className="text-xs text-muted-foreground/80 mt-0.5 block">
+                          {item.subtitle}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs uppercase tracking-[0.25em] text-gold font-mono shrink-0 ml-4">
+                      {item.category}
+                    </span>
+                  </figcaption>
+                </figure>
+              </AnimeTiltCard>
+            </div>
           ))}
         </div>
 
@@ -203,7 +243,7 @@ function Portfolio() {
           role="dialog"
           aria-modal="true"
           aria-label={current.title}
-          className="fixed inset-0 z-[115] flex flex-col bg-background/95 backdrop-blur-md"
+          className="fixed inset-0 z-[125] flex flex-col bg-background/95 backdrop-blur-md"
           onClick={() => setLightbox(null)}
         >
           <div className="flex items-center justify-between px-6 py-5 md:px-10">
@@ -222,10 +262,11 @@ function Portfolio() {
 
           <div className="flex min-h-0 flex-1 items-center justify-center px-6 md:px-24">
             <img
+              ref={lightboxImgRef}
               key={current.src}
               src={current.src}
-              alt={`${current.title} — ${current.category} photography by Utsav Studio`}
-              className="max-h-full max-w-full object-contain rounded-sm shadow-2xl"
+              alt={current.title}
+              className="max-h-full max-w-full object-contain rounded shadow-2xl"
             />
           </div>
 
@@ -235,12 +276,12 @@ function Portfolio() {
                 {current.title}
               </span>
               {current.subtitle && (
-                <span className="text-xs text-muted-foreground mt-0.5 block">
-                  {current.subtitle}
+                <span className="text-xs text-muted-foreground mt-0.5 block font-mono">
+                  {current.subtitle} · {current.year ?? "2025"}
                 </span>
               )}
             </div>
-            <span className="flex gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
               <button
                 aria-label="Previous image"
                 onClick={() =>
@@ -257,7 +298,7 @@ function Portfolio() {
               >
                 <ChevronRight className="size-5" aria-hidden />
               </button>
-            </span>
+            </div>
           </div>
         </div>
       )}
