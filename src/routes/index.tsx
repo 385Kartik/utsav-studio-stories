@@ -14,7 +14,7 @@ import { Eyebrow, OutlineButton } from "@/components/buttons";
 import { RollingNumber } from "@/components/RollingNumber";
 import { SelectedWorkGallery } from "@/components/SelectedWorkGallery";
 import { CinematicMarquee } from "@/components/CinematicMarquee";
-import { Anime3DCamera } from "@/components/Anime3DCamera";
+import { Anime3DToolbox } from "@/components/Anime3DToolbox";
 import { galleryItems, media, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/")({
@@ -55,8 +55,8 @@ function Index() {
       {/* 36-Photo Selected Work Gallery with fading bg text */}
       <SelectedWorkGallery />
 
-      {/* Interactive 3D Rangefinder Camera Disassembly powered by Anime.js */}
-      <Anime3DCamera />
+      {/* Anime.js 3D Optical Disassembly Engine with Scrubber */}
+      <Anime3DToolbox />
 
       {/* Rolling numbers count */}
       <StatsBand />
