@@ -1,17 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
 import {
   AnimatedTitle,
   CurvedReelScrollExperience,
-  Counter,
   HorizontalScroll,
   ParallaxImage,
   Reveal,
   ensureGsap,
 } from "@/components/motion";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
+import { RollingNumber } from "@/components/RollingNumber";
+import { SelectedWorkGallery } from "@/components/SelectedWorkGallery";
 import { galleryItems, media, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/")({
@@ -40,11 +41,19 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main>
+      {/* 3D Curved Serpentine & Cylinder Experience */}
       <CurvedReelScrollExperience items={galleryItems} heroImage={media.hero} />
 
+      {/* Services Section with clickable categories */}
       <ServicesScroller />
-      <ImageWordMarquee />
+
+      {/* 36-Photo Selected Work Gallery with fading bg text */}
+      <SelectedWorkGallery />
+
+      {/* Rolling numbers count */}
       <StatsBand />
+
+      {/* CTA Band */}
       <CtaBand />
     </main>
   );
@@ -114,8 +123,6 @@ function Hero() {
           Photography &amp; Cinematography
         </p>
       </div>
-
-      
     </section>
   );
 }
@@ -130,7 +137,7 @@ function Statement() {
         <Eyebrow>About our studio</Eyebrow>
       </Reveal>
       <h2 className="mt-8 font-display text-4xl font-light leading-[1.12] tracking-tight text-foreground md:text-6xl">
-        <AnimatedTitle text="Three decades of turning fleeting moments into family heirlooms." />
+        <AnimatedTitle text="Three decades of crafting timeless family memories." />
       </h2>
       <Reveal delay={0.15}>
         <p className="mx-auto mt-10 max-w-xl text-base leading-relaxed text-muted-foreground">
@@ -149,7 +156,7 @@ function Statement() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Pinned horizontal gallery — kept as-is, captions refined            */
+/* Pinned horizontal gallery                                          */
 /* ------------------------------------------------------------------ */
 function FramesGallery() {
   return (
@@ -179,7 +186,7 @@ function FramesGallery() {
               <span className="block font-display text-xl text-foreground md:text-2xl">
                 {item.title}
               </span>
-              <span className="mt-2 block text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+              <span className="mt-2 block text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-mono">
                 {item.category} · {String(i + 1).padStart(2, "0")}
               </span>
             </figcaption>
@@ -205,7 +212,7 @@ function FramesGallery() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Services — scroll-driven list, image swaps beside it (sticky)       */
+/* Services — scroll-driven list with clickable category topics        */
 /* ------------------------------------------------------------------ */
 function ServicesScroller() {
   const ref = useRef<HTMLDivElement>(null);
@@ -214,8 +221,6 @@ function ServicesScroller() {
   useEffect(() => {
     const el = ref.current!;
     const rows = Array.from(el.querySelectorAll<HTMLElement>("[data-service-row]"));
-    // Browser-native active-section tracking: a row is active while it
-    // overlaps the horizontal band around 60% of the viewport height.
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -231,8 +236,11 @@ function ServicesScroller() {
   }, []);
 
   return (
-    <section ref={ref} className="mx-auto max-w-7xl px-6 py-[14vh] md:px-10">
-      <div className="mb-16 max-w-2xl">
+    <section
+      ref={ref}
+      className="relative z-20 mx-auto max-w-7xl px-6 -mt-[25vh] md:-mt-[30vh] pt-16 pb-6 md:pt-20 md:pb-8 md:px-10 bg-gradient-to-b from-transparent via-background/90 to-background"
+    >
+      <div className="mb-14 max-w-2xl">
         <Reveal>
           <Eyebrow>What we do</Eyebrow>
         </Reveal>
@@ -242,43 +250,68 @@ function ServicesScroller() {
       </div>
 
       <div className="grid gap-14 md:grid-cols-[1.1fr_1fr] md:gap-20">
-        {/* List */}
+        {/* List of service categories — each row & subtopic navigates to that category in portfolio */}
         <div className="border-t border-border">
           {serviceGroups.map((g, i) => (
-            <Link
+            <div
               key={g.no}
               data-service-row
-              to="/services"
-              className={`group block border-b border-border py-9 transition-opacity duration-700 md:py-12 ${
+              className={`border-b border-border py-8 transition-opacity duration-700 md:py-11 ${
                 active === i ? "opacity-100" : "opacity-35 md:opacity-30"
               }`}
             >
-              <span className="flex items-baseline gap-5">
-                <span
-                  className={`text-[10px] tracking-[0.35em] transition-colors duration-700 ${
-                    active === i ? "text-gold" : "text-muted-foreground"
-                  }`}
-                >
-                  {g.no}
+              <Link
+                to="/portfolio"
+                search={{ category: g.category }}
+                className="group flex items-baseline justify-between transition-transform duration-300 hover:translate-x-1"
+              >
+                <span className="flex items-baseline gap-5">
+                  <span
+                    className={`text-[10px] tracking-[0.35em] font-mono transition-colors duration-700 ${
+                      active === i ? "text-gold" : "text-muted-foreground"
+                    }`}
+                  >
+                    {g.no}
+                  </span>
+                  <span
+                    className={`font-display text-3xl font-light tracking-tight text-foreground transition-colors group-hover:text-gold md:text-5xl ${
+                      active === i ? "md:translate-x-2" : ""
+                    }`}
+                  >
+                    {g.title}
+                  </span>
                 </span>
-                <span
-                  className={`font-display text-3xl font-light tracking-tight text-foreground transition-transform duration-700 group-hover:translate-x-1 md:text-5xl ${
-                    active === i ? "md:translate-x-2" : ""
-                  }`}
-                >
-                  {g.title}
+                <span className="hidden sm:inline-block text-[10px] uppercase font-mono tracking-widest text-gold opacity-0 group-hover:opacity-100 transition-opacity">
+                  View frames →
                 </span>
-              </span>
-              <span className="mt-3 block pl-[calc(2ch+1.25rem)] text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-                {g.items.join(" · ")}
-              </span>
-            </Link>
+              </Link>
+
+              {/* Sub-topics list: each item is clickable to its specific topic images */}
+              <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 pl-[calc(2ch+1.25rem)] text-[11px] uppercase tracking-[0.25em] text-muted-foreground font-mono">
+                {g.items.map((item, itIdx) => (
+                  <span key={item.label} className="inline-flex items-center">
+                    <Link
+                      to="/portfolio"
+                      search={{ category: item.category }}
+                      className="hover:text-gold transition-colors underline-offset-4 hover:underline"
+                    >
+                      {item.label}
+                    </Link>
+                    {itIdx < g.items.length - 1 && (
+                      <span className="mx-2 text-border select-none" aria-hidden>
+                        ·
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Sticky swapping image (desktop) */}
         <div className="relative hidden md:block">
-          <div className="sticky top-[18vh] aspect-[4/5] overflow-hidden">
+          <div className="sticky top-[18vh] aspect-[4/5] overflow-hidden rounded-md border border-border/40 shadow-2xl">
             {serviceGroups.map((g, i) => (
               <img
                 key={g.no}
@@ -298,75 +331,39 @@ function ServicesScroller() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Image + word marquee — images alternating with serif words          */
-/* ------------------------------------------------------------------ */
-function ImageWordMarquee() {
-  const seq = [
-    { word: "Weddings", img: media.wedding },
-    { word: "Films", img: media.cinema },
-    { word: "Portraits", img: media.family },
-    { word: "Maternity", img: media.maternity },
-    { word: "Kids", img: media.kids },
-    { word: "Birthdays", img: media.birthday },
-  ];
-
-  const row = (key: string) => (
-    <div key={key} className="flex shrink-0 items-center">
-      {seq.map((s, i) => (
-        <div key={i} className="flex items-center">
-          <span className="px-8 font-display text-4xl font-light tracking-tight text-foreground md:px-12 md:text-6xl">
-            {s.word}
-          </span>
-          <span className="h-16 w-28 shrink-0 overflow-hidden md:h-20 md:w-36">
-            <img
-              src={s.img}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-cover"
-              width={288}
-              height={160}
-            />
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  return (
-    <div className="overflow-hidden border-y border-border py-10" aria-hidden>
-      <div className="marquee-track" style={{ "--marquee-duration": "44s" } as CSSProperties}>
-        {row("a")}
-        {row("b")}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Stats band — counters over a full-bleed frame                       */
+/* Stats band — rolling numbers counter that triggers on scroll        */
 /* ------------------------------------------------------------------ */
 function StatsBand() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden border-t border-border/40">
       <ParallaxImage
         src={media.cinema}
         alt=""
         className="absolute inset-0"
-        imgClassName="opacity-45"
+        imgClassName="opacity-35"
         speed={10}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/20 to-background" />
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 py-[18vh] text-center sm:grid-cols-3">
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/40 to-background" />
+      <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 py-[16vh] text-center sm:grid-cols-3">
         {[
-          { value: <Counter to={30} suffix="+" />, label: "Years of craft" },
-          { value: <Counter to={4.6} decimals={1} suffix=" ★" />, label: "Rated across platforms" },
-          { value: <span className="font-display">1994</span>, label: "Studio established" },
+          {
+            value: <RollingNumber value={30} suffix="+" />,
+            label: "Years of craft",
+          },
+          {
+            value: <RollingNumber value="4.6" suffix=" ★" />,
+            label: "Rated across platforms",
+          },
+          {
+            value: <RollingNumber value={1994} />,
+            label: "Studio established",
+          },
         ].map((s, i) => (
-          <Reveal key={i} delay={i * 0.12} className="flex flex-col gap-3">
-            <span className="font-display text-5xl font-light text-foreground md:text-6xl">
+          <Reveal key={i} delay={i * 0.12} className="flex flex-col items-center gap-3">
+            <span className="font-display text-5xl font-light text-foreground md:text-6xl flex justify-center">
               {s.value}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-mono">
               {s.label}
             </span>
           </Reveal>

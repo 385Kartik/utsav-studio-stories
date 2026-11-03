@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { AnimatedTitle, ImageReveal, ParallaxImage, Reveal } from "@/components/motion";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
@@ -84,7 +84,7 @@ function Services() {
                 href={`#${a.id}`}
                 className="group flex items-baseline gap-3 text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
               >
-                <span className="text-[10px] tracking-[0.3em]">{a.no}</span>
+                <span className="text-[10px] tracking-[0.3em] font-mono text-gold">{a.no}</span>
                 <span className="font-display text-lg tracking-tight text-foreground">
                   {a.label}
                 </span>
@@ -126,20 +126,40 @@ function Services() {
             </Reveal>
             <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2">
               {g.items.map((item, j) => (
-                <Reveal key={item} delay={0.12 + j * 0.05}>
-                  <li className="group flex items-center gap-4 border-t border-border py-4 text-foreground sm:odd:border-r sm:odd:pr-6 sm:even:pl-6 sm:[&:nth-last-child(-n+2)]:border-b">
-                    <Check className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="text-sm leading-snug transition-transform duration-300 group-hover:translate-x-1 md:text-base">
-                      {item}
-                    </span>
+                <Reveal key={item.label} delay={0.12 + j * 0.05}>
+                  <li className="border-t border-border py-4 text-foreground sm:odd:border-r sm:odd:pr-6 sm:even:pl-6 sm:[&:nth-last-child(-n+2)]:border-b">
+                    <Link
+                      to="/portfolio"
+                      search={{ category: item.category }}
+                      className="group flex items-center justify-between text-sm leading-snug transition-colors hover:text-gold md:text-base"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Check className="size-4 shrink-0 text-muted-foreground group-hover:text-gold" aria-hidden />
+                        <span className="transition-transform duration-300 group-hover:translate-x-1">
+                          {item.label}
+                        </span>
+                      </span>
+                      <span className="text-[10px] uppercase font-mono tracking-wider opacity-0 transition-opacity group-hover:opacity-100 text-gold ml-2">
+                        View →
+                      </span>
+                    </Link>
                   </li>
                 </Reveal>
               ))}
             </ul>
             <Reveal delay={0.2}>
-              <OutlineButton to="/contact" className="mt-10">
-                Enquire for this
-              </OutlineButton>
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <OutlineButton to="/contact">
+                  Enquire for this
+                </OutlineButton>
+                <Link
+                  to="/portfolio"
+                  search={{ category: g.category }}
+                  className="text-xs uppercase tracking-[0.25em] text-muted-foreground hover:text-gold transition-colors underline-offset-4 hover:underline py-2 font-mono"
+                >
+                  View {g.title} Frames →
+                </Link>
+              </div>
             </Reveal>
           </div>
         </section>
