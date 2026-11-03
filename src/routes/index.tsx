@@ -15,6 +15,7 @@ import { RollingNumber } from "@/components/RollingNumber";
 import { SelectedWorkGallery } from "@/components/SelectedWorkGallery";
 import { CinematicMarquee } from "@/components/CinematicMarquee";
 import { Anime3DToolbox } from "@/components/Anime3DToolbox";
+import { AnimeHeroDial } from "@/components/AnimeHeroDial";
 import { galleryItems, media, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/")({
@@ -48,6 +49,18 @@ function Index() {
 
       {/* Infinite Cinematic Marquee Ticker */}
       <CinematicMarquee />
+
+      {/* Anime.js Iconic Circular Radar Dial & Wave Modulator */}
+      <section className="relative z-20 py-24 bg-background border-t border-border/40 overflow-hidden flex flex-col items-center text-center">
+        <Eyebrow>Optical resonance</Eyebrow>
+        <h2 className="mt-3 font-display text-4xl md:text-6xl font-light text-foreground tracking-tight max-w-xl">
+          Harmonics in motion.
+        </h2>
+        <p className="mt-4 text-xs md:text-sm text-muted-foreground font-light max-w-md leading-relaxed">
+          Modulate shutter resonance and frequency wavelength with the interactive Anime.js timeline dial.
+        </p>
+        <AnimeHeroDial className="mt-12" />
+      </section>
 
       {/* Services Section with clickable categories */}
       <ServicesScroller />
