@@ -5,6 +5,7 @@ import { animate } from "animejs";
 import { selectedWorkItems, galleryItems, type GalleryItem } from "@/lib/media";
 import { OutlineButton } from "@/components/buttons";
 import { AnimeTiltCard } from "@/components/AnimeTiltCard";
+import { Crazy3DCard } from "@/components/Crazy3DCard";
 
 export function SelectedWorkGallery() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -97,8 +98,31 @@ export function SelectedWorkGallery() {
   const col3 = selectedWorkItems.filter((_, i) => i % 4 === 2);
   const col4 = selectedWorkItems.filter((_, i) => i % 4 === 3);
 
-  const renderCard = (item: GalleryItem, globalIdx: number, aspect: string) => (
-    <div key={globalIdx} className="group relative flex flex-col mb-5 md:mb-7">
+  const renderCard = (item: GalleryItem, globalIdx: number, aspect: string) => {
+    if (globalIdx === 0 || globalIdx === 3) {
+      return (
+        <div key={globalIdx} className="group relative flex flex-col mb-5 md:mb-7">
+          <Crazy3DCard
+            src={item.src}
+            title={item.title}
+            category={item.category}
+            frameNumber={`ARCHIVE #${String(globalIdx + 1).padStart(2, "0")}`}
+            aspect={aspect}
+            onClick={() => setLightbox(globalIdx)}
+            showBadge={true}
+          />
+          <div className="mt-2 px-1 flex items-baseline justify-between text-[11px]">
+            <span className="font-display text-foreground/90 truncate">{item.title}</span>
+            <span className="text-[9px] uppercase tracking-wider font-mono text-gold shrink-0 ml-2">
+              ✦ 3D FOLD &amp; REVOLVE
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={globalIdx} className="group relative flex flex-col mb-5 md:mb-7">
       <AnimeTiltCard
         onClick={() => setLightbox(globalIdx)}
         className="rounded-md"
@@ -149,6 +173,7 @@ export function SelectedWorkGallery() {
       </div>
     </div>
   );
+};
 
   return (
     <section

@@ -5,7 +5,7 @@ import { animate, stagger, scrambleText, createTimeline } from "animejs";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
-import { AnimeStaggerGrid } from "@/components/AnimeStaggerGrid";
+import { Crazy3DCard } from "@/components/Crazy3DCard";
 import {
   useEffect,
   useRef,
@@ -53,7 +53,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Custom cursor — a ring that grows over interactive elements         */
+/* Custom cursor â€” a ring that grows over interactive elements         */
 /* ------------------------------------------------------------------ */
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
@@ -94,7 +94,7 @@ export function Cursor() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Reveal — fades/slides children in when they enter the viewport      */
+/* Reveal â€” fades/slides children in when they enter the viewport      */
 /* ------------------------------------------------------------------ */
 export function Reveal({
   children,
@@ -135,7 +135,7 @@ export function Reveal({
 }
 
 /* ------------------------------------------------------------------ */
-/* AnimatedTitle — word-by-word masked reveal for display headlines    */
+/* AnimatedTitle â€” word-by-word masked reveal for display headlines    */
 /* ------------------------------------------------------------------ */
 export function AnimatedTitle({
   text,
@@ -183,7 +183,7 @@ export function AnimatedTitle({
 }
 
 /* ------------------------------------------------------------------ */
-/* ImageReveal — shutter-style clip reveal on images                   */
+/* ImageReveal â€” shutter-style clip reveal on images                   */
 /* ------------------------------------------------------------------ */
 export function ImageReveal({
   children,
@@ -224,7 +224,7 @@ export function ImageReveal({
 }
 
 /* ------------------------------------------------------------------ */
-/* ParallaxImage — image drifts as the page scrolls past it            */
+/* ParallaxImage â€” image drifts as the page scrolls past it            */
 /* ------------------------------------------------------------------ */
 export function ParallaxImage({
   src,
@@ -273,7 +273,7 @@ export function ParallaxImage({
 }
 
 /* ------------------------------------------------------------------ */
-/* Magnetic — element gently follows the pointer                       */
+/* Magnetic â€” element gently follows the pointer                       */
 /* ------------------------------------------------------------------ */
 export function Magnetic({
   children,
@@ -314,7 +314,7 @@ export function Magnetic({
 }
 
 /* ------------------------------------------------------------------ */
-/* Counter — number counts up when scrolled into view                  */
+/* Counter â€” number counts up when scrolled into view                  */
 /* ------------------------------------------------------------------ */
 export function Counter({
   to,
@@ -357,7 +357,7 @@ export function Counter({
 }
 
 /* ------------------------------------------------------------------ */
-/* HorizontalScroll — pins a section and scrolls its track sideways    */
+/* HorizontalScroll â€” pins a section and scrolls its track sideways    */
 /* ------------------------------------------------------------------ */
 export function HorizontalScroll({ children }: { children: ReactNode }) {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -396,14 +396,14 @@ export function HorizontalScroll({ children }: { children: ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Marquee — endless CSS-driven ticker (content duplicated inside)     */
+/* Marquee â€” endless CSS-driven ticker (content duplicated inside)     */
 /* ------------------------------------------------------------------ */
 export function Marquee({
   items,
   className,
   duration = 32,
   reverse = false,
-  separator = "·",
+  separator = "Â·",
 }: {
   items: string[];
   className?: string;
@@ -442,7 +442,7 @@ export function Marquee({
 }
 
 /* ------------------------------------------------------------------ */
-/* CurvedReelScrollExperience — Ref 1 Serpentine Wave + Ref 2 3D Reel  */
+/* CurvedReelScrollExperience â€” Ref 1 Serpentine Wave + Ref 2 3D Reel  */
 /* ------------------------------------------------------------------ */
 export interface GalleryScrollItem {
   src: string;
@@ -652,7 +652,7 @@ export function CurvedReelScrollExperience({
       // Initial layout pass
       applyFrame(0);
 
-      // ── Anime.js kinetic reveal: badge first ──────────────────────────────
+      // â”€â”€ Anime.js kinetic reveal: badge first â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       animate("[data-hero-badge]", {
         opacity: [0, 1],
         translateY: [10, 0],
@@ -661,7 +661,7 @@ export function CurvedReelScrollExperience({
         ease: "outExpo",
       });
 
-      // ── Scramble text on hero title — the animejs.com signature effect ───
+      // â”€â”€ Scramble text on hero title â€” the animejs.com signature effect â”€â”€â”€
       // The hero h1 uses [data-hero-letter] spans. We scramble the whole title
       // by targeting the wrapper span [data-hero-scramble] element.
       const heroScrambleEl = container.querySelector<HTMLElement>("[data-hero-scramble]");
@@ -689,7 +689,7 @@ export function CurvedReelScrollExperience({
         });
       }
 
-      // ── Divider line ──────────────────────────────────────────────────────
+      // â”€â”€ Divider line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       animate("[data-hero-line]", {
         scaleX: [0, 1],
         opacity: [0, 1],
@@ -698,7 +698,7 @@ export function CurvedReelScrollExperience({
         ease: "outQuad",
       });
 
-      // ── Sub-label ─────────────────────────────────────────────────────────
+      // â”€â”€ Sub-label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       animate("[data-hero-sub]", {
         translateY: [20, 0],
         opacity: [0, 1],
@@ -771,8 +771,6 @@ export function CurvedReelScrollExperience({
           className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 will-change-transform"
           style={{ transformOrigin: "center top", transformStyle: "preserve-3d" }}
         >
-          {/* Stagger dot grid — animejs.com signature, full-hero coverage */}
-          <AnimeStaggerGrid />
 
           {heroImage && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -788,10 +786,10 @@ export function CurvedReelScrollExperience({
 
           <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75 will-change-transform">
             <p data-hero-badge className="mb-4 text-[11px] uppercase tracking-[0.6em] text-gold font-mono font-medium opacity-0">
-              Mira Road East · Est. 1994
+              Mira Road East Â· Est. 1994
             </p>
             <h1 className="font-display text-[14vw] md:text-[9.5vw] font-light leading-[0.96] tracking-tight text-foreground">
-              {/* Single element for scrambleText — animejs rewrites innerHTML */}
+              {/* Single element for scrambleText â€” animejs rewrites innerHTML */}
               <span
                 data-hero-scramble
                 className="inline-block will-change-transform"
@@ -837,7 +835,7 @@ export function CurvedReelScrollExperience({
               >
                 <div className="flex items-center justify-between pb-1 px-1 text-[8px] font-mono tracking-widest text-muted-foreground border-b border-border/60">
                   <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
-                  <span className="text-gold font-semibold">• 35MM</span>
+                  <span className="text-gold font-semibold">â€¢ 35MM</span>
                 </div>
                 <div className="w-full aspect-[4/5] mt-1.5 rounded overflow-hidden bg-muted/20 relative">
                   <img
@@ -881,23 +879,16 @@ export function CurvedReelScrollExperience({
             {cylinderCards.map((item, idx) => (
               <div
                 key={`cyl-${idx}`}
-                className="absolute left-0 top-0 w-[150px] md:w-[190px] p-2 rounded-lg bg-card/90 border border-border/80 shadow-2xl backdrop-blur-sm will-change-transform pointer-events-auto"
+                className="absolute left-0 top-0 w-[150px] md:w-[190px] will-change-transform pointer-events-auto"
+                style={{ transformStyle: "preserve-3d" }}
               >
-                <div className="flex items-center justify-between pb-1 px-1 text-[8px] font-mono tracking-widest text-muted-foreground border-b border-border/60">
-                  <span>FRAME #{String((idx % 7) + 1).padStart(2, "0")}</span>
-                  <span className="text-gold">• FILM</span>
-                </div>
-                <div className="w-full aspect-[3/4] mt-1.5 rounded overflow-hidden bg-muted/20">
-                  <img
-                    src={item.src}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="pt-1.5 px-0.5 text-center font-display text-xs text-foreground truncate">
-                  {item.title}
-                </div>
+                <Crazy3DCard
+                  src={item.src}
+                  title={item.title}
+                  category={item.category}
+                  frameNumber={`FRAME #${String((idx % 7) + 1).padStart(2, "0")}`}
+                  showBadge={idx === 0 || idx === 1}
+                />
               </div>
             ))}
           </div>
