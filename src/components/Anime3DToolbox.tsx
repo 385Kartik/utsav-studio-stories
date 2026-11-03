@@ -3,17 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { animate } from "animejs";
-import { Layers, Eye, RotateCw, Sparkles, Sliders } from "lucide-react";
-
-interface LensElement {
-  id: string;
-  name: string;
-  label: string;
-  side: "left" | "right";
-  build: (theme: ThemeColors) => THREE.Group;
-  restZ: number;
-  explodeZ: number;
-}
+import { Layers, Eye, Sparkles } from "lucide-react";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 interface ThemeColors {
   fill: number;
@@ -27,16 +18,15 @@ interface ThemeColors {
 
 export function Anime3DToolbox() {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [explodeProgress, setExplodeProgress] = useState(0.75); // Start exploded like animejs.com!
+  const [explodeProgress, setExplodeProgress] = useState(0.72);
   const [isExploded, setIsExploded] = useState(true);
   const [colorMode, setColorMode] = useState<"cream" | "gold" | "blueprint">("cream");
 
-  // State reference for 60fps loop & Anime.js
   const animStateRef = useRef({
-    progress: 0.75,
-    rotX: 0.48,
-    rotY: -0.65,
-    rotZ: 0.32,
+    progress: 0.72,
+    rotX: 0.38,
+    rotY: -0.62,
+    rotZ: 0.08,
     autoSpin: true,
     lastX: 0,
     lastY: 0,
@@ -53,66 +43,77 @@ export function Anime3DToolbox() {
     // ── Three.js Scene Setup ──────────────────────────────────────────
     const scene = new THREE.Scene();
 
-    const width = mount.clientWidth || 800;
-    const height = mount.clientHeight || 580;
+    let width = mount.clientWidth || 900;
+    let height = mount.clientHeight || 600;
 
-    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
-    camera.position.set(7.5, 5.5, 9.5);
+    const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
+    camera.position.set(0, 0, 12);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
     mount.appendChild(renderer.domElement);
 
-    // Main 3D Pivot Group angled diagonally (Isometric 45° view like animejs.com!)
+    // Studio Environment Reflections
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    // ── Master Lens Group (Angled Diagonally like Anime.js CAD view) ───
     const lensMasterGroup = new THREE.Group();
-    lensMasterGroup.rotation.set(0.48, -0.65, 0.32);
+    lensMasterGroup.rotation.set(0.38, -0.62, 0.08);
     scene.add(lensMasterGroup);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.2);
-    dirLight1.position.set(8, 14, 10);
-    scene.add(dirLight1);
+    const keyLight = new THREE.DirectionalLight(0xfff5e6, 3.2);
+    keyLight.position.set(8, 12, 10);
+    scene.add(keyLight);
 
-    const dirLight2 = new THREE.DirectionalLight(0xd4a359, 1.6);
-    dirLight2.position.set(-8, -6, -6);
-    scene.add(dirLight2);
+    const rimLight = new THREE.DirectionalLight(0x70b8ff, 1.8);
+    rimLight.position.set(-8, -6, -6);
+    scene.add(rimLight);
 
-    // Theme Color Palettes
+    const goldFill = new THREE.DirectionalLight(0xd4a359, 2.0);
+    goldFill.position.set(-6, 6, 6);
+    scene.add(goldFill);
+
+    // Theme Color Palettes (High Contrast, Vibrant on Dark Cinema BG)
     const getThemeColors = (mode: "cream" | "gold" | "blueprint"): ThemeColors => {
       if (mode === "cream") {
         return {
-          fill: 0xf4f0e8,
-          edge: 0x242220,
-          accent: 0xc99446,
-          glass: 0x64b5f6,
-          metalness: 0.15,
-          roughness: 0.35,
+          fill: 0xfbf8f1,
+          edge: 0xd4a359,
+          accent: 0xe6ab4a,
+          glass: 0x93c5fd,
+          metalness: 0.35,
+          roughness: 0.25,
           opacity: 0.96,
         };
       } else if (mode === "gold") {
         return {
-          fill: 0x161619,
-          edge: 0xd4a359,
-          accent: 0xf5dfa0,
-          glass: 0x4dd0e1,
-          metalness: 0.85,
-          roughness: 0.2,
+          fill: 0x1c1917,
+          edge: 0xf59e0b,
+          accent: 0xfbbf24,
+          glass: 0x38bdf8,
+          metalness: 0.88,
+          roughness: 0.18,
           opacity: 0.94,
         };
       } else {
         return {
-          fill: 0x081324,
+          fill: 0x091428,
           edge: 0x38bdf8,
           accent: 0x818cf8,
-          glass: 0x38bdf8,
-          metalness: 0.5,
-          roughness: 0.3,
-          opacity: 0.9,
+          glass: 0x06b6d4,
+          metalness: 0.55,
+          roughness: 0.22,
+          opacity: 0.92,
         };
       }
     };
@@ -125,25 +126,35 @@ export function Anime3DToolbox() {
       isGlass = false,
       isAccent = false,
     ) => {
-      const mat = new THREE.MeshStandardMaterial({
-        color: isGlass
-          ? currentColors.glass
-          : isAccent
-            ? currentColors.accent
-            : currentColors.fill,
-        metalness: isGlass ? 0.9 : currentColors.metalness,
-        roughness: isGlass ? 0.1 : currentColors.roughness,
-        transparent: true,
-        opacity: isGlass ? 0.35 : currentColors.opacity,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1,
-      });
+      let mat: THREE.Material;
+      if (isGlass) {
+        mat = new THREE.MeshPhysicalMaterial({
+          color: currentColors.glass,
+          metalness: 0.1,
+          roughness: 0.05,
+          transmission: 0.88,
+          thickness: 1.4,
+          reflectivity: 0.9,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.05,
+          ior: 1.52,
+          transparent: true,
+          opacity: 0.75,
+        });
+      } else {
+        mat = new THREE.MeshStandardMaterial({
+          color: isAccent ? currentColors.accent : currentColors.fill,
+          metalness: isAccent ? 0.9 : currentColors.metalness,
+          roughness: isAccent ? 0.2 : currentColors.roughness,
+          transparent: true,
+          opacity: currentColors.opacity,
+        });
+      }
 
       const mesh = new THREE.Mesh(geom, mat);
-      const edgeGeom = new THREE.EdgesGeometry(geom, 22);
+      const edgeGeom = new THREE.EdgesGeometry(geom, 24);
       const edgeMat = new THREE.LineBasicMaterial({
-        color: isGlass ? 0x90caf9 : currentColors.edge,
+        color: isGlass ? 0x93c5fd : currentColors.edge,
         linewidth: 1.5,
       });
       const lines = new THREE.LineSegments(edgeGeom, edgeMat);
@@ -151,11 +162,9 @@ export function Anime3DToolbox() {
       return mesh;
     };
 
-    // ── Build 8 High-Precision Optical Lens Assembly Groups ─────────────
+    // ── Build 9 High-Precision Optical Lens Assembly Groups ─────────────
+    // Optical axis is along Z. Cylinders are rotated 90° on X so they point down Z!
     const elementsData: { group: THREE.Group; restZ: number; explodeZ: number }[] = [];
-
-    // Axis direction vector: diagonal [1, 1, 1] normalized
-    const axisDir = new THREE.Vector3(1, 1, 1).normalize();
 
     const addAssemblyGroup = (
       restDist: number,
@@ -173,115 +182,136 @@ export function Anime3DToolbox() {
     };
 
     // 1. Front Sun Hood & Filter Thread
-    addAssemblyGroup(2.4, 4.8, (g) => {
-      // Main flared hood
-      g.add(makePart(new THREE.CylinderGeometry(2.3, 2.0, 0.6, 32, 1, true)));
-      g.add(makePart(new THREE.CylinderGeometry(2.0, 1.85, 0.3, 32)));
-      // Thread ridges
-      for (let i = 0; i < 4; i++) {
-        const ring = makePart(new THREE.TorusGeometry(1.88, 0.02, 6, 32));
-        ring.position.y = (i - 1.5) * 0.06;
-        g.add(ring);
-      }
+    addAssemblyGroup(2.4, 4.6, (g) => {
+      const hoodGeom = new THREE.CylinderGeometry(2.3, 2.0, 0.6, 36, 1, true);
+      hoodGeom.rotateX(Math.PI / 2);
+      g.add(makePart(hoodGeom));
+
+      const ringGeom = new THREE.CylinderGeometry(2.0, 1.85, 0.25, 36);
+      ringGeom.rotateX(Math.PI / 2);
+      g.add(makePart(ringGeom));
     });
 
     // 2. Front Aspherical Objective Glass (Optical Element 1)
-    addAssemblyGroup(1.8, 3.8, (g) => {
-      // Curved lens element
-      const glass = makePart(new THREE.SphereGeometry(1.8, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.35), true);
-      glass.rotation.x = Math.PI;
-      glass.scale.set(1, 0.45, 1);
+    addAssemblyGroup(1.8, 3.5, (g) => {
+      const glassGeom = new THREE.SphereGeometry(1.8, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.32);
+      glassGeom.rotateX(Math.PI / 2);
+      const glass = makePart(glassGeom, true);
+      glass.scale.set(1, 1, 0.45);
       g.add(glass);
-      // Retaining collar
-      g.add(makePart(new THREE.CylinderGeometry(1.85, 1.85, 0.25, 32, 1, true)));
+
+      const collarGeom = new THREE.CylinderGeometry(1.85, 1.85, 0.2, 36, 1, true);
+      collarGeom.rotateX(Math.PI / 2);
+      g.add(makePart(collarGeom));
     });
 
     // 3. Knurled Manual Focus Helicoid Barrel
-    addAssemblyGroup(1.2, 2.7, (g) => {
-      // Barrel cylinder
-      g.add(makePart(new THREE.CylinderGeometry(1.8, 1.8, 0.9, 32)));
+    addAssemblyGroup(1.2, 2.4, (g) => {
+      const barrelGeom = new THREE.CylinderGeometry(1.8, 1.8, 0.85, 36);
+      barrelGeom.rotateX(Math.PI / 2);
+      g.add(makePart(barrelGeom));
+
       // 24 Knurled vertical grip bars around the barrel
       for (let i = 0; i < 24; i++) {
         const angle = (i / 24) * Math.PI * 2;
-        const bar = makePart(new THREE.BoxGeometry(0.06, 0.75, 0.08));
-        bar.position.set(Math.cos(angle) * 1.82, 0, Math.sin(angle) * 1.82);
-        bar.rotation.y = -angle;
+        const barGeom = new THREE.BoxGeometry(0.06, 0.08, 0.72);
+        const bar = makePart(barGeom, false, true);
+        bar.position.set(Math.cos(angle) * 1.82, Math.sin(angle) * 1.82, 0);
+        bar.rotation.z = angle;
         g.add(bar);
       }
     });
 
     // 4. Distance Scale & Depth of Field Calibration Collar
-    addAssemblyGroup(0.6, 1.7, (g) => {
-      g.add(makePart(new THREE.CylinderGeometry(1.76, 1.76, 0.45, 32)));
-      // Accent calibration ring
-      const accentRing = makePart(new THREE.CylinderGeometry(1.78, 1.78, 0.12, 32), false, true);
-      accentRing.position.y = 0.1;
-      g.add(accentRing);
+    addAssemblyGroup(0.6, 1.5, (g) => {
+      const scaleGeom = new THREE.CylinderGeometry(1.76, 1.76, 0.45, 36);
+      scaleGeom.rotateX(Math.PI / 2);
+      g.add(makePart(scaleGeom));
+
+      const accentGeom = new THREE.CylinderGeometry(1.78, 1.78, 0.12, 36);
+      accentGeom.rotateX(Math.PI / 2);
+      const accent = makePart(accentGeom, false, true);
+      accent.position.z = 0.12;
+      g.add(accent);
     });
 
     // 5. 8-Blade Mechanical Aperture Iris Diaphragm
-    addAssemblyGroup(0.0, 0.6, (g) => {
-      // Outer aperture collar
-      g.add(makePart(new THREE.CylinderGeometry(1.72, 1.72, 0.5, 32, 1, true)));
+    addAssemblyGroup(0.0, 0.5, (g) => {
+      const outerIrisGeom = new THREE.CylinderGeometry(1.72, 1.72, 0.4, 36, 1, true);
+      outerIrisGeom.rotateX(Math.PI / 2);
+      g.add(makePart(outerIrisGeom));
+
       // 8 polygonal aperture blades forming the iris
       for (let i = 0; i < 8; i++) {
         const angle = (i / 8) * Math.PI * 2;
-        const blade = makePart(new THREE.BoxGeometry(0.7, 0.04, 0.25), false, true);
-        blade.position.set(Math.cos(angle) * 0.75, 0, Math.sin(angle) * 0.75);
-        blade.rotation.y = angle + 0.45;
+        const bladeGeom = new THREE.BoxGeometry(0.7, 0.22, 0.03);
+        const blade = makePart(bladeGeom, false, true);
+        blade.position.set(Math.cos(angle) * 0.72, Math.sin(angle) * 0.72, 0);
+        blade.rotation.z = angle + 0.45;
         g.add(blade);
       }
     });
 
     // 6. Dispersion Doublet Optical Group (Optical Element 2)
-    addAssemblyGroup(-0.6, -0.6, (g) => {
-      const concaveGlass = makePart(new THREE.CylinderGeometry(1.4, 1.4, 0.35, 32), true);
+    addAssemblyGroup(-0.6, -0.5, (g) => {
+      const concaveGeom = new THREE.CylinderGeometry(1.4, 1.4, 0.35, 32);
+      concaveGeom.rotateX(Math.PI / 2);
+      const concaveGlass = makePart(concaveGeom, true);
       g.add(concaveGlass);
-      g.add(makePart(new THREE.CylinderGeometry(1.46, 1.46, 0.45, 32, 1, true)));
+
+      const collarGeom = new THREE.CylinderGeometry(1.46, 1.46, 0.4, 36, 1, true);
+      collarGeom.rotateX(Math.PI / 2);
+      g.add(makePart(collarGeom));
     });
 
     // 7. Internal Linear Float Motor & Electronics Group
-    addAssemblyGroup(-1.2, -1.8, (g) => {
-      g.add(makePart(new THREE.CylinderGeometry(1.65, 1.65, 0.8, 32)));
-      // Electronic actuator blocks
+    addAssemblyGroup(-1.2, -1.6, (g) => {
+      const motorGeom = new THREE.CylinderGeometry(1.65, 1.65, 0.75, 36);
+      motorGeom.rotateX(Math.PI / 2);
+      g.add(makePart(motorGeom));
+
       for (let i = 0; i < 4; i++) {
         const angle = (i / 4) * Math.PI * 2;
-        const block = makePart(new THREE.BoxGeometry(0.4, 0.55, 0.3));
-        block.position.set(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
-        block.rotation.y = angle;
+        const block = makePart(new THREE.BoxGeometry(0.38, 0.28, 0.52));
+        block.position.set(Math.cos(angle) * 1.5, Math.sin(angle) * 1.5, 0);
+        block.rotation.z = angle;
         g.add(block);
       }
     });
 
     // 8. Stainless Steel Bayonet Mount & Electronic Contacts
-    addAssemblyGroup(-1.8, -2.9, (g) => {
-      g.add(makePart(new THREE.CylinderGeometry(1.75, 1.75, 0.35, 32)));
-      // 3 Bayonet locking lugs
+    addAssemblyGroup(-1.8, -2.7, (g) => {
+      const bayonetGeom = new THREE.CylinderGeometry(1.75, 1.75, 0.35, 36);
+      bayonetGeom.rotateX(Math.PI / 2);
+      g.add(makePart(bayonetGeom));
+
       for (let i = 0; i < 3; i++) {
         const angle = (i / 3) * Math.PI * 2;
-        const lug = makePart(new THREE.BoxGeometry(0.35, 0.15, 0.5), false, true);
-        lug.position.set(Math.cos(angle) * 1.85, 0.08, Math.sin(angle) * 1.85);
-        lug.rotation.y = angle;
+        const lug = makePart(new THREE.BoxGeometry(0.35, 0.45, 0.15), false, true);
+        lug.position.set(Math.cos(angle) * 1.85, Math.sin(angle) * 1.85, -0.08);
+        lug.rotation.z = angle;
         g.add(lug);
       }
     });
 
     // 9. Full-Frame CMOS Sensor Block
-    addAssemblyGroup(-2.4, -4.0, (g) => {
+    addAssemblyGroup(-2.4, -3.8, (g) => {
       // Sensor silicon plate (3:2 format)
-      const sensor = makePart(new THREE.BoxGeometry(2.4, 0.15, 1.6), true, true);
+      const sensor = makePart(new THREE.BoxGeometry(2.4, 1.6, 0.12), true, true);
       g.add(sensor);
       // Gold frame bezel
-      g.add(makePart(new THREE.BoxGeometry(2.6, 0.1, 1.8)));
+      const frame = makePart(new THREE.BoxGeometry(2.65, 1.85, 0.08), false, true);
+      frame.position.z = -0.06;
+      g.add(frame);
     });
 
     elementsRef.current = elementsData;
 
-    // Align all elements along the diagonal axis
+    // Align all elements along the optical Z axis
     const updatePositions = (progress: number) => {
       elementsData.forEach((el) => {
-        const currentDist = THREE.MathUtils.lerp(el.restZ, el.explodeZ, progress);
-        el.group.position.copy(axisDir.clone().multiplyScalar(currentDist));
+        const currentZ = THREE.MathUtils.lerp(el.restZ, el.explodeZ, progress);
+        el.group.position.set(0, 0, currentZ);
       });
     };
     updatePositions(animStateRef.current.progress);
@@ -292,9 +322,8 @@ export function Anime3DToolbox() {
     const tick = () => {
       const s = animStateRef.current;
 
-      // Smooth auto-orbit when not dragging
       if (s.autoSpin && !s.isDragging) {
-        s.rotZ += 0.0035;
+        s.rotY -= 0.0035;
         lensMasterGroup.rotation.set(s.rotX, s.rotY, s.rotZ);
       } else {
         lensMasterGroup.rotation.set(s.rotX, s.rotY, s.rotZ);
@@ -308,29 +337,33 @@ export function Anime3DToolbox() {
 
     animId = requestAnimationFrame(tick);
 
-    // Resize Handler
-    const handleResize = () => {
-      if (!mount) return;
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
+    // ── Resize Observer ───────────────────────────────────────────────
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        const h = entry.contentRect.height;
+        if (w > 0 && h > 0) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
+      }
+    });
 
-    window.addEventListener("resize", handleResize);
+    ro.observe(mount);
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener("resize", handleResize);
+      ro.disconnect();
       renderer.dispose();
+      pmremGenerator.dispose();
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
     };
   }, [colorMode]);
 
-  // ── Anime.js: Animate Scrubber & Exploded State ─────────────────────────────
+  // ── Anime.js: Animate Scrubber & Exploded State ─────────────────────
   const setExplosion = (targetVal: number, duration = 1200) => {
     setIsExploded(targetVal > 0.4);
     animStateRef.current.autoSpin = false;
@@ -352,7 +385,7 @@ export function Anime3DToolbox() {
     setExplosion(isExploded ? 0 : 0.82);
   };
 
-  // ── Mouse Drag 3D Orbit Handlers ───────────────────────────────────────────
+  // ── Mouse Drag 3D Orbit Handlers ───────────────────────────────────
   const onMouseDown = (e: React.MouseEvent) => {
     animStateRef.current.isDragging = true;
     animStateRef.current.autoSpin = false;
@@ -367,36 +400,27 @@ export function Anime3DToolbox() {
     animStateRef.current.lastX = e.clientX;
     animStateRef.current.lastY = e.clientY;
 
-    animStateRef.current.rotZ += dx * 0.01;
-    animStateRef.current.rotX += dy * 0.01;
+    animStateRef.current.rotY += dx * 0.008;
+    animStateRef.current.rotX += dy * 0.008;
   };
 
   const onMouseUp = () => {
     animStateRef.current.isDragging = false;
   };
 
-  const bgStyle =
-    colorMode === "cream"
-      ? "bg-[#e5e0d8] text-[#242320]"
-      : colorMode === "gold"
-        ? "bg-[#111113] text-[#f4eedf]"
-        : "bg-[#091220] text-[#e0f2fe]";
-
   return (
-    <section
-      className={`relative z-20 py-24 md:py-32 transition-colors duration-700 select-none overflow-hidden ${bgStyle}`}
-    >
-      <div className="relative mx-auto max-w-7xl px-6 md:px-10">
-        {/* Top Header */}
-        <div className="max-w-xl mb-10">
-          <span className="font-mono text-xs uppercase tracking-[0.35em] text-gold font-semibold block mb-3">
-            Optical Engineering · Est. 1994
-          </span>
-          <h2 className="font-display text-4xl md:text-6xl font-light tracking-tight leading-[1.08]">
-            The complete <br />
-            <span className="font-italic">studio optical system</span>
+    <section className="relative z-20 py-24 bg-background border-t border-border/40 overflow-hidden">
+      <div className="mx-auto max-w-7xl px-6 md:px-10">
+        {/* Section Header */}
+        <div className="mb-12 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold text-[10px] font-mono tracking-widest uppercase">
+            <Sparkles className="size-3" />
+            <span>Interactive Disassembly</span>
+          </div>
+          <h2 className="mt-4 font-display text-4xl md:text-6xl font-light text-foreground tracking-tight">
+            Medium-format optics.
           </h2>
-          <p className="mt-4 text-xs md:text-sm text-foreground/75 font-light leading-relaxed">
+          <p className="mt-3 text-xs md:text-sm text-muted-foreground font-light max-w-lg leading-relaxed">
             Break free from browser limitations and explore our medium-format lens anatomy in
             full real-time 3D, powered by Anime.js.
           </p>
@@ -404,7 +428,7 @@ export function Anime3DToolbox() {
 
         {/* 3D Stage Container */}
         <div
-          className="relative w-full h-[580px] md:h-[680px] rounded-2xl border border-black/10 dark:border-white/10 overflow-hidden shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing"
+          className="relative w-full h-[580px] md:h-[680px] rounded-2xl border border-gold/20 bg-black/40 backdrop-blur-sm overflow-hidden shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing"
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
@@ -414,7 +438,7 @@ export function Anime3DToolbox() {
           <div ref={mountRef} className="absolute inset-0 w-full h-full" />
 
           {/* ── Left Technical Labels ─────────────────────────────── */}
-          <div className="pointer-events-none absolute left-6 md:left-12 top-10 flex flex-col gap-6 z-10 font-mono text-[10px] md:text-xs">
+          <div className="pointer-events-none absolute left-6 md:left-12 top-10 flex flex-col gap-6 z-10 font-mono text-[10px] md:text-xs text-gold/90">
             {[
               "35MM CINE HOOD",
               "ASPHERICAL GLASS",
@@ -422,23 +446,23 @@ export function Anime3DToolbox() {
               "f/1.2 APERTURE IRIS",
               "DOUBLET GLASS",
               "BAYONET FLANGE",
-            ].map((label, idx) => (
+            ].map((label) => (
               <div
                 key={label}
                 className="flex items-center gap-3 transition-all duration-500"
                 style={{
-                  opacity: 0.35 + explodeProgress * 0.65,
-                  transform: `translateX(${(1 - explodeProgress) * -15}px)`,
+                  opacity: 0.4 + explodeProgress * 0.6,
+                  transform: `translateX(${(1 - explodeProgress) * -12}px)`,
                 }}
               >
                 <span className="tracking-widest uppercase font-semibold">{label}</span>
-                <span className="w-8 md:w-16 h-px bg-current opacity-40" />
+                <span className="w-8 md:w-16 h-px bg-gold/40" />
               </div>
             ))}
           </div>
 
           {/* ── Right Technical Labels ────────────────────────────── */}
-          <div className="pointer-events-none absolute right-6 md:right-12 top-10 flex flex-col items-end gap-6 z-10 font-mono text-[10px] md:text-xs">
+          <div className="pointer-events-none absolute right-6 md:right-12 top-10 flex flex-col items-end gap-6 z-10 font-mono text-[10px] md:text-xs text-gold/90">
             {[
               "FLUORITE COATING",
               "CALIBRATION SCALE",
@@ -446,23 +470,23 @@ export function Anime3DToolbox() {
               "OPTICAL STABILIZER",
               "LINEAR ACTUATOR",
               "FULL-FRAME SENSOR",
-            ].map((label, idx) => (
+            ].map((label) => (
               <div
                 key={label}
                 className="flex items-center gap-3 transition-all duration-500"
                 style={{
-                  opacity: 0.35 + explodeProgress * 0.65,
-                  transform: `translateX(${(1 - explodeProgress) * 15}px)`,
+                  opacity: 0.4 + explodeProgress * 0.6,
+                  transform: `translateX(${(1 - explodeProgress) * 12}px)`,
                 }}
               >
-                <span className="w-8 md:w-16 h-px bg-current opacity-40" />
+                <span className="w-8 md:w-16 h-px bg-gold/40" />
                 <span className="tracking-widest uppercase font-semibold">{label}</span>
               </div>
             ))}
           </div>
 
           {/* ── Center Prompt Hint ────────────────────────────────── */}
-          <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/10 dark:bg-white/10 backdrop-blur-md text-[9px] font-mono tracking-widest uppercase">
+          <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 border border-gold/30 text-gold/90 backdrop-blur-md text-[9px] font-mono tracking-widest uppercase shadow-lg">
             ⟲ DRAG IN 3D TO ORBIT · SCRUB BELOW TO EXPLODE
           </div>
 
@@ -472,7 +496,7 @@ export function Anime3DToolbox() {
               <button
                 type="button"
                 onClick={toggleAssemble}
-                className="px-3.5 py-1.5 rounded-full bg-black/85 hover:bg-black text-white text-[10px] font-mono tracking-wider transition-transform active:scale-95 shadow-lg flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-full bg-black/90 hover:bg-black border border-gold/40 text-gold text-[10px] font-mono tracking-wider transition-transform active:scale-95 shadow-lg flex items-center gap-1.5"
               >
                 <Layers className="size-3 text-gold" />
                 <span>{isExploded ? "ASSEMBLE" : "EXPLODE"}</span>
@@ -485,16 +509,16 @@ export function Anime3DToolbox() {
                     m === "cream" ? "gold" : m === "gold" ? "blueprint" : "cream",
                   );
                 }}
-                className="size-8 rounded-full bg-black/15 dark:bg-white/15 flex items-center justify-center text-current hover:opacity-80 transition-opacity"
+                className="size-8 rounded-full bg-black/80 border border-gold/40 flex items-center justify-center text-gold hover:text-white transition-colors"
                 title="Toggle Theme"
               >
                 <Eye className="size-3.5" />
               </button>
             </div>
 
-            {/* Horizontal Ticker Scrubber (Exactly like animejs.com!) */}
+            {/* Horizontal Ticker Scrubber (Iconic Anime.js style) */}
             <div
-              className="relative w-64 md:w-84 h-11 rounded-lg bg-black/90 border border-white/20 backdrop-blur-md px-3 flex items-center cursor-ew-resize select-none shadow-2xl"
+              className="relative w-64 md:w-84 h-11 rounded-lg bg-black/90 border border-gold/40 backdrop-blur-md px-3 flex items-center cursor-ew-resize select-none shadow-2xl"
               onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const update = (moveE: MouseEvent) => {
@@ -515,8 +539,8 @@ export function Anime3DToolbox() {
                 {Array.from({ length: 44 }).map((_, i) => (
                   <span
                     key={i}
-                    className={`inline-block w-px bg-white transition-all ${
-                      i % 5 === 0 ? "h-4 bg-white/90" : "h-2 bg-white/40"
+                    className={`inline-block w-px bg-gold transition-all ${
+                      i % 5 === 0 ? "h-4 bg-gold" : "h-2 bg-gold/40"
                     }`}
                   />
                 ))}

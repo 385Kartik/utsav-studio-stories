@@ -2,25 +2,42 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Camera, Orbit, Eye, Sparkles } from "lucide-react";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { Camera, Orbit, Sparkles, RefreshCw, EyeOff, Eye } from "lucide-react";
 
 /**
  * Scroll3DCamera
  * ───────────────
- * A photorealistic 3D Vintage Rangefinder Camera that moves, rotates,
- * and frames dynamically as the user scrolls down the website.
+ * A photorealistic, high-fidelity 3D Studio Camera that moves, rotates,
+ * and frames dynamically as the user scrolls across Utsav Studio.
  *
- * • Scroll-driven 3D spline trajectory (Hero -> Services -> Gallery -> Stats -> CTA)
- * • Front lens aperture iris dynamically stops down on scroll
- * • Mouse parallax micro-tilt
- * • Interactive 3D Orbit mode toggle
- * • 60fps buttery smooth lerping
+ * • Loads real PBR 3D models (Steampunk Cine & Vintage Field Camera)
+ * • Studio ACES Filmic tone mapping + RoomEnvironment HDRI reflections
+ * • Non-blocking scroll waypoints tucked into layout negative spaces
+ * • 60fps cosine-eased trajectory lerping + mouse parallax micro-tilt
+ * • Interactive 3D Orbit mode (drag to spin 360°)
+ * • Model switching & Flash burst trigger
  */
+
+type CameraModelKey = "steampunk" | "antique";
+
+interface Waypoint {
+  p: number;
+  pos: [number, number, number];
+  rot: [number, number, number];
+  scale: number;
+}
 
 export function Scroll3DCamera() {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isInteractive, setIsInteractive] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(0);
+  const [activeModel, setActiveModel] = useState<CameraModelKey>("steampunk");
+  const [isDocked, setIsDocked] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [flashTrigger, setFlashTrigger] = useState(false);
 
   const stateRef = useRef({
     scrollProgress: 0,
@@ -34,8 +51,10 @@ export function Scroll3DCamera() {
     orbitY: 0,
     lastX: 0,
     lastY: 0,
-    flashOpacity: 0,
   });
+
+  const modelPivotRef = useRef<THREE.Group | null>(null);
+  const modelsCacheRef = useRef<Record<string, THREE.Group>>({});
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,216 +64,131 @@ export function Scroll3DCamera() {
     // ── Three.js Scene Setup ──────────────────────────────────────────
     const scene = new THREE.Scene();
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
     camera.position.set(0, 0, 8.5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     mount.appendChild(renderer.domElement);
 
-    // Camera Master Pivot
-    const cameraMaster = new THREE.Group();
-    scene.add(cameraMaster);
+    // ── Studio PBR Environment Reflections ────────────────────────────
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = envTexture;
 
     // ── Cinematic 3-Point Lighting ────────────────────────────────────
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    // Key Light (Warm Tungsten Gold)
-    const keyLight = new THREE.DirectionalLight(0xffecd1, 2.8);
-    keyLight.position.set(8, 12, 10);
+    // Key Light (Warm 3200K Studio Tungsten)
+    const keyLight = new THREE.DirectionalLight(0xfff1dc, 3.2);
+    keyLight.position.set(7, 9, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
     scene.add(keyLight);
 
-    // Rim / Back Light (Deep Amber Accent)
-    const rimLight = new THREE.DirectionalLight(0xd4a359, 3.2);
-    rimLight.position.set(-10, -6, -8);
+    // Rim Light (Teal/Silver Backlight)
+    const rimLight = new THREE.DirectionalLight(0x7ac4ff, 2.0);
+    rimLight.position.set(-8, -4, -6);
     scene.add(rimLight);
 
-    // Fill Light (Subtle Cinema Teal)
-    const fillLight = new THREE.DirectionalLight(0x70b8ff, 1.2);
-    fillLight.position.set(-8, 8, 6);
+    // Warm Gold Fill Light
+    const fillLight = new THREE.DirectionalLight(0xd4a359, 2.4);
+    fillLight.position.set(-5, 6, 4);
     scene.add(fillLight);
 
-    // ── Materials ─────────────────────────────────────────────────────
-    const brassMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd4a359, // Gold / brass
-      metalness: 0.9,
-      roughness: 0.22,
-    });
+    // ── Master Camera Pivot ───────────────────────────────────────────
+    const masterPivot = new THREE.Group();
+    scene.add(masterPivot);
+    modelPivotRef.current = masterPivot;
 
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-      color: 0x18181b, // Dark charcoal leatherette
-      metalness: 0.3,
-      roughness: 0.65,
-    });
+    // ── GLTF & Draco Loader Setup ─────────────────────────────────────
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("/draco/gltf/");
 
-    const chromeMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe4e4e7,
-      metalness: 0.95,
-      roughness: 0.15,
-    });
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
 
-    const lensGlassMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x60a5fa,
-      metalness: 0.1,
-      roughness: 0.05,
-      transmission: 0.85,
-      thickness: 1.2,
-      reflectivity: 0.9,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.08,
-      ior: 1.52,
-    });
+    // Helper: Load & Center GLB Model
+    const loadModel = (url: string, key: string, targetSize = 2.4) => {
+      if (modelsCacheRef.current[key]) {
+        // Swap to cached model
+        while (masterPivot.children.length > 0) {
+          masterPivot.remove(masterPivot.children[0]);
+        }
+        masterPivot.add(modelsCacheRef.current[key]);
+        setIsLoaded(true);
+        return;
+      }
 
-    const darkMetal = new THREE.MeshStandardMaterial({
-      color: 0x27272a,
-      metalness: 0.8,
-      roughness: 0.35,
-    });
+      gltfLoader.load(
+        url,
+        (gltf) => {
+          const raw = gltf.scene;
 
-    const redAccent = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      metalness: 0.6,
-      roughness: 0.3,
-    });
+          // Compute bounding box and center pivot
+          const box = new THREE.Box3().setFromObject(raw);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
 
-    // ── Build 3D Rangefinder Camera Geometry ──────────────────────────
-    // 1. Main Body Chassis
-    const bodyGeom = new THREE.BoxGeometry(4.0, 2.5, 1.35);
-    const bodyMesh = new THREE.Mesh(bodyGeom, bodyMaterial);
-    bodyMesh.position.set(0, 0, -0.4);
-    cameraMaster.add(bodyMesh);
+          raw.position.sub(center);
 
-    // Top Plate Deck (Brushed Brass)
-    const topPlateGeom = new THREE.BoxGeometry(4.04, 0.45, 1.38);
-    const topPlateMesh = new THREE.Mesh(topPlateGeom, brassMaterial);
-    topPlateMesh.position.set(0, 1.32, -0.4);
-    cameraMaster.add(topPlateMesh);
+          // Normalize scale so it fits perfectly
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const baseScale = targetSize / maxDim;
+          raw.scale.setScalar(baseScale);
 
-    // Bottom Base Plate
-    const basePlateGeom = new THREE.BoxGeometry(4.04, 0.25, 1.38);
-    const basePlateMesh = new THREE.Mesh(basePlateGeom, brassMaterial);
-    basePlateMesh.position.set(0, -1.3, -0.4);
-    cameraMaster.add(basePlateMesh);
+          // Enhance materials for photorealism
+          raw.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
 
-    // Viewfinder Prism Housing (Top Left)
-    const vfGeom = new THREE.BoxGeometry(1.2, 0.55, 0.9);
-    const vfMesh = new THREE.Mesh(vfGeom, brassMaterial);
-    vfMesh.position.set(-1.1, 1.7, -0.45);
-    cameraMaster.add(vfMesh);
+              if (mesh.material) {
+                const mat = mesh.material as THREE.MeshStandardMaterial;
+                mat.envMapIntensity = 1.7;
+                mat.needsUpdate = true;
+              }
+            }
+          });
 
-    // Viewfinder Front Glass Window
-    const vfGlassGeom = new THREE.BoxGeometry(0.5, 0.35, 0.05);
-    const vfGlass = new THREE.Mesh(vfGlassGeom, lensGlassMaterial);
-    vfGlass.position.set(-1.1, 1.7, 0.02);
-    cameraMaster.add(vfGlass);
+          const wrapper = new THREE.Group();
+          wrapper.add(raw);
+          modelsCacheRef.current[key] = wrapper;
 
-    // Rangefinder Round Window
-    const rfWindow = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.18, 0.18, 0.1, 24),
-      lensGlassMaterial,
-    );
-    rfWindow.rotation.x = Math.PI / 2;
-    rfWindow.position.set(0.1, 1.7, 0.02);
-    cameraMaster.add(rfWindow);
+          // Add to pivot
+          while (masterPivot.children.length > 0) {
+            masterPivot.remove(masterPivot.children[0]);
+          }
+          masterPivot.add(wrapper);
+          setIsLoaded(true);
+        },
+        undefined,
+        (err) => {
+          console.warn(`[Scroll3DCamera] Failed to load ${url}:`, err);
+        },
+      );
+    };
 
-    // Shutter Speed Dial (Top Right)
-    const dialGeom = new THREE.CylinderGeometry(0.42, 0.42, 0.35, 32);
-    const dialMesh = new THREE.Mesh(dialGeom, darkMetal);
-    dialMesh.position.set(1.15, 1.65, -0.45);
-    cameraMaster.add(dialMesh);
+    // Load active model
+    const modelUrl =
+      activeModel === "steampunk"
+        ? "/assets/models/steampunk_camera.glb"
+        : "/assets/models/antique_camera.glb";
+    loadModel(modelUrl, activeModel, activeModel === "steampunk" ? 2.3 : 2.5);
 
-    // Shutter Release Button
-    const shutterBtn = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.22, 0.22, 0.45, 24),
-      chromeMaterial,
-    );
-    shutterBtn.position.set(1.68, 1.62, -0.35);
-    cameraMaster.add(shutterBtn);
-
-    // Red Studio Badge on Front
-    const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 32), redAccent);
-    badge.rotation.x = Math.PI / 2;
-    badge.position.set(-1.45, 0.65, 0.3);
-    cameraMaster.add(badge);
-
-    // ── 2. The 3D Lens Barrel (Protruding Forward) ───────────────────
-    const lensGroup = new THREE.Group();
-    lensGroup.position.set(0.25, -0.05, 0.25);
-    cameraMaster.add(lensGroup);
-
-    // Lens Mount Collar (Flange)
-    const mountRing = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.35, 1.45, 0.35, 48),
-      chromeMaterial,
-    );
-    mountRing.rotation.x = Math.PI / 2;
-    mountRing.position.z = 0.15;
-    lensGroup.add(mountRing);
-
-    // Aperture Selection Ring
-    const apRing = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.3, 1.3, 0.45, 48),
-      brassMaterial,
-    );
-    apRing.rotation.x = Math.PI / 2;
-    apRing.position.z = 0.55;
-    lensGroup.add(apRing);
-
-    // Knurled Focus Helicoid Barrel
-    const focusBarrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.32, 1.32, 0.85, 48),
-      darkMetal,
-    );
-    focusBarrel.rotation.x = Math.PI / 2;
-    focusBarrel.position.z = 1.15;
-    lensGroup.add(focusBarrel);
-
-    // 24 Knurled vertical grip bars around the focus barrel
-    for (let i = 0; i < 28; i++) {
-      const angle = (i / 28) * Math.PI * 2;
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.72, 0.06), brassMaterial);
-      bar.position.set(Math.cos(angle) * 1.33, Math.sin(angle) * 1.33, 1.15);
-      bar.rotation.z = angle;
-      lensGroup.add(bar);
-    }
-
-    // Front Filter Ring & Engraved Hood
-    const frontBezel = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.38, 1.32, 0.45, 48),
-      brassMaterial,
-    );
-    frontBezel.rotation.x = Math.PI / 2;
-    frontBezel.position.z = 1.75;
-    lensGroup.add(frontBezel);
-
-    // Front Curved Aspherical Glass Element
-    const lensGlassGeom = new THREE.SphereGeometry(1.28, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.32);
-    const frontGlass = new THREE.Mesh(lensGlassGeom, lensGlassMaterial);
-    frontGlass.position.z = 1.62;
-    frontGlass.scale.set(1, 1, 0.5);
-    lensGroup.add(frontGlass);
-
-    // Internal Aperture Iris Blades (Expand/Contract on scroll!)
-    const apertureBladesGroup = new THREE.Group();
-    apertureBladesGroup.position.z = 0.9;
-    lensGroup.add(apertureBladesGroup);
-
-    const blades: THREE.Mesh[] = [];
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.02), darkMetal);
-      blade.position.set(Math.cos(angle) * 0.45, Math.sin(angle) * 0.45, 0);
-      blade.rotation.z = angle + 0.3;
-      apertureBladesGroup.add(blade);
-      blades.push(blade);
-    }
-
-    // ── Scroll Tracking & 3D Waypoints ────────────────────────────────
+    // ── Scroll & Mouse Tracking ───────────────────────────────────────
     const onScroll = () => {
       const scrollY = window.scrollY;
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -274,8 +208,8 @@ export function Scroll3DCamera() {
         const dy = e.clientY - stateRef.current.lastY;
         stateRef.current.lastX = e.clientX;
         stateRef.current.lastY = e.clientY;
-        stateRef.current.orbitY += dx * 0.01;
-        stateRef.current.orbitX += dy * 0.01;
+        stateRef.current.orbitY += dx * 0.008;
+        stateRef.current.orbitX += dy * 0.008;
       }
     };
 
@@ -295,28 +229,31 @@ export function Scroll3DCamera() {
     window.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp);
 
-    // Initial scroll sync
     onScroll();
 
-    // ── 3D Waypoints along the scroll journey ─────────────────────────
-    const waypoints = [
-      // 0.00: Hero — Front facing, floating proudly, breathing
-      { p: 0.0, pos: [0.0, -0.2, 0.2], rot: [0.12, -0.22, 0.05], scale: 1.15, iris: 1.0 },
+    // ── 3D Waypoints (Tasteful, Non-Blocking, Refined in Margins) ────
+    // Camera is positioned in margins / negative space, NEVER covering headings or photo grids!
+    const waypoints: Waypoint[] = [
+      // 0.00: Hero — Floating proudly in upper-right margin, tilted 3/4
+      { p: 0.0, pos: [3.3, -0.1, 0.2], rot: [-0.05, -0.6, 0.05], scale: 0.64 },
 
-      // 0.20: Dial & Frequency — Banks slightly right, revealing dials
-      { p: 0.2, pos: [1.8, 0.1, -0.2], rot: [0.22, 0.65, -0.08], scale: 1.05, iris: 0.8 },
+      // 0.18: Curved Reel — Right margin, clean of reel cards
+      { p: 0.18, pos: [3.2, -0.3, 0.0], rot: [0.1, -0.75, 0.05], scale: 0.62 },
 
-      // 0.40: Services — Banks over to the right side, showing side profile & lens
-      { p: 0.4, pos: [2.5, -0.3, -0.6], rot: [0.35, -1.15, 0.18], scale: 0.95, iris: 0.65 },
+      // 0.35: Harmonics Radar Dial — Docks gracefully to the right of the dial
+      { p: 0.35, pos: [3.4, 0.0, -0.2], rot: [0.2, -0.85, 0.1], scale: 0.68 },
 
-      // 0.65: Selected Work Gallery — Sweeps across to the left, dynamic angle
-      { p: 0.65, pos: [-2.6, 0.2, -0.4], rot: [-0.18, 1.35, -0.12], scale: 0.92, iris: 0.5 },
+      // 0.52: Services Scroller — Right margin beside service groups
+      { p: 0.52, pos: [3.3, 0.15, -0.2], rot: [-0.1, -0.5, 0.05], scale: 0.66 },
 
-      // 0.82: Optical System — Dramatic macro zoom into the front lens element!
-      { p: 0.82, pos: [0.0, 0.0, 1.2], rot: [-0.05, -0.15, 0.35], scale: 1.45, iris: 0.3 },
+      // 0.72: Selected Work Gallery — Docks in bottom-right corner, 100% clear of all 36 photo cards
+      { p: 0.72, pos: [3.3, -1.75, 0.4], rot: [0.1, -0.4, 0.02], scale: 0.46 },
 
-      // 1.00: CTA Band — Snaps directly forward into focus, ready for the shoot
-      { p: 1.0, pos: [0.0, -0.4, 0.5], rot: [0.08, 0.02, 0.0], scale: 1.2, iris: 1.0 },
+      // 0.88: Medium-Format Optics / Stats — Right side framing
+      { p: 0.88, pos: [3.4, -0.2, 0.1], rot: [0.08, -0.5, 0.08], scale: 0.68 },
+
+      // 1.00: CTA Band — Centered below the main CTA headline in hero pose
+      { p: 1.0, pos: [0.0, -0.65, 0.6], rot: [0.05, 0.0, 0.0], scale: 0.82 },
     ];
 
     const interpolateTrajectory = (p: number) => {
@@ -333,7 +270,7 @@ export function Scroll3DCamera() {
       const span = Math.max(0.001, w2.p - w1.p);
       const factor = (p - w1.p) / span;
 
-      // Smooth cosine easing
+      // Cosine ease
       const eased = (1 - Math.cos(factor * Math.PI)) / 2;
 
       const posX = THREE.MathUtils.lerp(w1.pos[0], w2.pos[0], eased);
@@ -345,9 +282,8 @@ export function Scroll3DCamera() {
       const rotZ = THREE.MathUtils.lerp(w1.rot[2], w2.rot[2], eased);
 
       const scale = THREE.MathUtils.lerp(w1.scale, w2.scale, eased);
-      const iris = THREE.MathUtils.lerp(w1.iris, w2.iris, eased);
 
-      return { posX, posY, posZ, rotX, rotY, rotZ, scale, iris };
+      return { posX, posY, posZ, rotX, rotY, rotZ, scale };
     };
 
     // ── 60fps Physics & Render Loop ───────────────────────────────────
@@ -358,47 +294,46 @@ export function Scroll3DCamera() {
       clock += 0.015;
       const s = stateRef.current;
 
-      // Smooth lerp scroll progress
-      s.scrollProgress += (s.targetProgress - s.scrollProgress) * 0.085;
+      // Smooth scroll progress lerp
+      s.scrollProgress += (s.targetProgress - s.scrollProgress) * 0.075;
 
-      // Smooth lerp mouse parallax
-      s.mouseX += (s.targetMouseX - s.mouseX) * 0.06;
-      s.mouseY += (s.targetMouseY - s.mouseY) * 0.06;
+      // Smooth mouse parallax lerp
+      s.mouseX += (s.targetMouseX - s.mouseX) * 0.05;
+      s.mouseY += (s.targetMouseY - s.mouseY) * 0.05;
 
       const cur = interpolateTrajectory(s.scrollProgress);
 
-      // Subtle breathing floating motion
-      const breathY = Math.sin(clock * 1.5) * 0.06;
-      const breathRot = Math.cos(clock * 1.2) * 0.02;
+      // Subtle breathing motion
+      const breathY = Math.sin(clock * 1.4) * 0.04;
+      const breathRot = Math.cos(clock * 1.1) * 0.015;
 
       if (!isInteractive) {
-        cameraMaster.position.set(
-          cur.posX + s.mouseX * 0.35,
-          cur.posY - s.mouseY * 0.25 + breathY,
-          cur.posZ,
-        );
+        if (isDocked) {
+          // Docked in bottom-right corner as a mini companion
+          masterPivot.position.set(3.2, -1.8, 0.5);
+          masterPivot.rotation.set(0.1, clock * 0.4, 0);
+          masterPivot.scale.setScalar(0.42);
+        } else {
+          masterPivot.position.set(
+            cur.posX + s.mouseX * 0.25,
+            cur.posY - s.mouseY * 0.2 + breathY,
+            cur.posZ,
+          );
 
-        cameraMaster.rotation.set(
-          cur.rotX - s.mouseY * 0.18 + breathRot,
-          cur.rotY + s.mouseX * 0.25,
-          cur.rotZ,
-        );
+          masterPivot.rotation.set(
+            cur.rotX - s.mouseY * 0.12 + breathRot,
+            cur.rotY + s.mouseX * 0.2,
+            cur.rotZ,
+          );
 
-        cameraMaster.scale.setScalar(cur.scale);
+          masterPivot.scale.setScalar(cur.scale);
+        }
       } else {
         // Interactive Orbit Mode
-        cameraMaster.rotation.set(s.orbitX, s.orbitY, 0);
-        cameraMaster.position.set(0, breathY, 0.4);
+        masterPivot.rotation.set(s.orbitX, s.orbitY, 0);
+        masterPivot.position.set(0, breathY, 0.3);
+        masterPivot.scale.setScalar(1.0);
       }
-
-      // Rotate aperture blades on scroll
-      blades.forEach((b, i) => {
-        const baseAngle = (i / 8) * Math.PI * 2;
-        b.rotation.z = baseAngle + (1 - cur.iris) * 0.8;
-      });
-
-      // Shutter release button subtle animation
-      shutterBtn.position.y = 1.62 - (s.scrollProgress > 0.95 ? 0.08 : 0);
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(tick);
@@ -406,14 +341,15 @@ export function Scroll3DCamera() {
 
     animId = requestAnimationFrame(tick);
 
-    // Resize
+    // ── Resize Observer ───────────────────────────────────────────────
     const handleResize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      camera.aspect = w / h;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(width, height);
     };
+
     window.addEventListener("resize", handleResize);
 
     return () => {
@@ -424,11 +360,18 @@ export function Scroll3DCamera() {
       window.removeEventListener("mouseup", onMouseUp);
       window.removeEventListener("resize", handleResize);
       renderer.dispose();
+      pmremGenerator.dispose();
+      dracoLoader.dispose();
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [isInteractive]);
+  }, [activeModel, isInteractive, isDocked]);
+
+  const triggerShutterFlash = () => {
+    setFlashTrigger(true);
+    setTimeout(() => setFlashTrigger(false), 240);
+  };
 
   return (
     <>
@@ -436,31 +379,86 @@ export function Scroll3DCamera() {
       <div
         ref={mountRef}
         aria-hidden
-        className={`fixed inset-0 z-[15] overflow-hidden ${
-          isInteractive ? "pointer-events-auto cursor-grab active:cursor-grabbing" : "pointer-events-none"
+        className={`fixed inset-0 z-[35] overflow-hidden transition-opacity duration-700 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        } ${
+          isInteractive
+            ? "pointer-events-auto cursor-grab active:cursor-grabbing bg-black/20 backdrop-blur-[2px]"
+            : "pointer-events-none"
         }`}
       />
 
-      {/* ── Floating 3D Camera Telemetry & Controller Widget ────────── */}
-      <div className="fixed bottom-6 left-6 z-[80] hidden sm:flex items-center gap-3 select-none">
-        <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-black/85 border border-gold/40 text-gold shadow-2xl backdrop-blur-md font-mono text-[10px] tracking-widest">
+      {/* ── Camera Flash Burst FX ───────────────────────────────────── */}
+      {flashTrigger && (
+        <div className="fixed inset-0 z-[9999] pointer-events-none bg-white animate-out fade-out duration-300" />
+      )}
+
+      {/* ── Floating 3D Camera Telemetry & Controller HUD ───────────── */}
+      <div className="fixed bottom-6 left-6 z-[80] hidden sm:flex items-center gap-2 select-none">
+        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-black/85 border border-gold/30 text-gold shadow-2xl backdrop-blur-md font-mono text-[10px] tracking-widest">
+          {/* Status LED & Label */}
           <span className="flex items-center gap-1.5 font-semibold">
-            <Camera className="size-3.5 text-gold animate-pulse" />
-            <span>3D CAM SCROLL</span>
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+            <Camera className="size-3.5 text-gold" />
+            <span>3D CAM</span>
           </span>
-          <span className="w-px h-3 bg-gold/30" />
-          <span className="text-foreground/80">{scrollPercent}% TRAVEL</span>
-          <span className="w-px h-3 bg-gold/30" />
+
+          <span className="w-px h-3 bg-white/15" />
+
+          {/* Travel Percent */}
+          <span className="text-foreground/80 tabular-nums">{scrollPercent}% TRAVEL</span>
+
+          <span className="w-px h-3 bg-white/15" />
+
+          {/* Model Switcher Button */}
+          <button
+            type="button"
+            onClick={() => setActiveModel((m) => (m === "steampunk" ? "antique" : "steampunk"))}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-white/80 hover:text-white hover:bg-white/10 transition-colors uppercase"
+            title="Switch 3D Camera Model"
+          >
+            <RefreshCw className="size-2.5 text-gold" />
+            <span>{activeModel === "steampunk" ? "CINE" : "FIELD"}</span>
+          </button>
+
+          <span className="w-px h-3 bg-white/15" />
+
+          {/* Shutter Click Button */}
+          <button
+            type="button"
+            onClick={triggerShutterFlash}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-amber-300 hover:text-amber-100 hover:bg-amber-400/20 transition-colors"
+            title="Trigger Camera Flash"
+          >
+            <Sparkles className="size-2.5" />
+            <span>SNAP</span>
+          </button>
+
+          <span className="w-px h-3 bg-white/15" />
+
+          {/* 3D Orbit Drag Toggle */}
           <button
             type="button"
             onClick={() => setIsInteractive((v) => !v)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
-              isInteractive ? "bg-gold text-black font-bold" : "hover:text-white text-gold/80"
+            className={`flex items-center gap-1 px-2 py-0.5 rounded transition-all ${
+              isInteractive
+                ? "bg-gold text-black font-bold shadow-[0_0_10px_rgba(212,163,89,0.5)]"
+                : "text-gold/90 hover:text-white hover:bg-white/10"
             }`}
-            title="Toggle 3D Orbit Control"
+            title="Toggle 360° Mouse Orbit"
           >
             <Orbit className="size-3" />
             <span>{isInteractive ? "ORBIT ON" : "DRAG 3D"}</span>
+          </button>
+
+          {/* Dock / Minimize Button */}
+          <button
+            type="button"
+            onClick={() => setIsDocked((v) => !v)}
+            className="p-1 rounded text-white/50 hover:text-white transition-colors"
+            title={isDocked ? "Restore full 3D scroll" : "Dock to bottom corner"}
+          >
+            {isDocked ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
           </button>
         </div>
       </div>
