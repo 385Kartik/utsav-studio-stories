@@ -592,17 +592,17 @@ export function CurvedReelScrollExperience({
         }
 
         // ==========================================================
-        // Phase 4: Wide 3D Panoramic Bundle Reel (Ref 2) (0.42 -> 0.98)
+        // Phase 4: Wide 3D Panoramic Bundle Reel (Ref 2) (0.40 -> 1.0)
         // ==========================================================
         if (cylStage && cylWrapper) {
-          if (p >= 0.40 && p <= 0.98) {
+          if (p >= 0.40 && p <= 1.0) {
             let reelOpacity = 1;
             if (p < 0.50) reelOpacity = (p - 0.40) / 0.10;
-            else if (p > 0.88) reelOpacity = 1 - (p - 0.88) / 0.10;
+            else if (p > 0.94) reelOpacity = 1 - (p - 0.94) / 0.06;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
             const radius = isMobile ? 260 : Math.min(width * 0.46, 560);
-            const reelNorm = (p - 0.40) / 0.48;
+            const reelNorm = (p - 0.40) / 0.56;
             const currentRot = reelNorm * 540;
 
             cylCards.forEach((card, idx) => {
@@ -659,7 +659,7 @@ export function CurvedReelScrollExperience({
   const cylinderCards = Array.from({ length: 18 }).map((_, i) => items[i % items.length]);
 
   return (
-    <section ref={containerRef} className="relative h-[250vh] md:h-[270vh] bg-background">
+    <section ref={containerRef} className="relative h-[125vh] md:h-[135vh] bg-background">
       <div
         className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none"
         style={{ perspective: "1300px" }}
@@ -727,7 +727,7 @@ export function CurvedReelScrollExperience({
         >
           <Eyebrow>About our studio</Eyebrow>
           <h2 className="mt-3 font-display text-3xl font-light leading-[1.15] tracking-tight text-foreground md:text-5xl">
-            Three decades of turning fleeting moments into family heirlooms.
+            Three decades of crafting timeless family memories.
           </h2>
         </div>
 

@@ -4,7 +4,16 @@ import { ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AnimatedTitle, ImageReveal, Reveal } from "@/components/motion";
 import { galleryItems } from "@/lib/media";
 
+interface PortfolioSearch {
+  category?: string;
+}
+
 export const Route = createFileRoute("/portfolio")({
+  validateSearch: (search: Record<string, unknown>): PortfolioSearch => {
+    return {
+      category: typeof search.category === "string" ? search.category : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Portfolio — Utsav Studio, Mira Road East" },
@@ -27,11 +36,50 @@ export const Route = createFileRoute("/portfolio")({
 
 const filters = ["All", "Wedding", "Pre-Wedding", "Portraits", "Films"] as const;
 
+function normalizeCategory(cat?: string): (typeof filters)[number] {
+  if (!cat) return "All";
+  const lower = cat.toLowerCase();
+  if (lower.includes("pre")) return "Pre-Wedding";
+  if (lower.includes("wed") || lower.includes("shaadi") || lower.includes("vow")) return "Wedding";
+  if (
+    lower.includes("portrait") ||
+    lower.includes("matern") ||
+    lower.includes("kid") ||
+    lower.includes("birth") ||
+    lower.includes("fam") ||
+    lower.includes("baby")
+  ) {
+    return "Portraits";
+  }
+  if (lower.includes("film") || lower.includes("cine") || lower.includes("video")) return "Films";
+  return "All";
+}
+
 const aspectCycle = ["aspect-[3/4]", "aspect-[4/5]", "aspect-square", "aspect-[3/4]"];
 
 function Portfolio() {
-  const [filter, setFilter] = useState<(typeof filters)[number]>("All");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [filter, setFilter] = useState<(typeof filters)[number]>(() =>
+    normalizeCategory(search.category),
+  );
   const [lightbox, setLightbox] = useState<number | null>(null);
+
+  // Sync state if URL search param changes
+  useEffect(() => {
+    if (search.category) {
+      setFilter(normalizeCategory(search.category));
+    }
+  }, [search.category]);
+
+  const handleFilterChange = (f: (typeof filters)[number]) => {
+    setFilter(f);
+    navigate({
+      search: { category: f === "All" ? undefined : f },
+      replace: true,
+    });
+  };
+
   const items =
     filter === "All" ? galleryItems : galleryItems.filter((g) => g.category === filter);
 
@@ -57,35 +105,37 @@ function Portfolio() {
     <main>
       <section className="mx-auto max-w-6xl px-6 pb-[6vh] pt-40 md:px-10 md:pt-52">
         <Reveal>
-          <p className="text-xs uppercase tracking-[0.5em] text-gold">Portfolio</p>
+          <p className="text-xs uppercase tracking-[0.5em] text-gold font-mono">Portfolio Archive</p>
         </Reveal>
         <h1 className="mt-6 font-display text-5xl leading-[1.02] tracking-tight text-foreground md:text-8xl">
           <AnimatedTitle text="Selected frames" />
         </h1>
         <Reveal delay={0.15}>
           <p className="mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            A small cut of recent work — weddings, pre-weddings, portraits and film stills.
-            Click any frame to view it large. The full archive is best viewed at the studio,
-            over chai.
+            A curated cut of our 30-year journey — weddings, pre-weddings, portraits, and film stills.
+            Click any frame to view in full resolution.
           </p>
         </Reveal>
 
         <Reveal delay={0.2}>
-          <div className="mt-12 flex flex-wrap gap-3">
+          <div className="mt-12 flex flex-wrap items-center gap-3">
             {filters.map((f) => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => handleFilterChange(f)}
                 aria-pressed={filter === f}
                 className={`rounded-full border px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all duration-300 ${
                   filter === f
-                    ? "border-gold bg-gold text-primary-foreground"
+                    ? "border-gold bg-gold text-primary-foreground font-medium"
                     : "border-border text-muted-foreground hover:border-gold hover:text-gold"
                 }`}
               >
                 {f}
               </button>
             ))}
+            <span className="ml-2 text-xs uppercase tracking-[0.2em] text-muted-foreground/70 font-mono">
+              ({items.length} frames)
+            </span>
           </div>
         </Reveal>
       </section>
@@ -93,7 +143,7 @@ function Portfolio() {
       <section className="mx-auto max-w-7xl px-6 pb-[12vh] md:px-10">
         <div key={filter} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, i) => (
-            <ImageReveal key={item.title} delay={(i % 3) * 0.08} className="group">
+            <ImageReveal key={`${item.title}-${i}`} delay={(i % 3) * 0.08} className="group">
               <figure
                 role="button"
                 tabIndex={0}
@@ -105,7 +155,7 @@ function Portfolio() {
                 className="cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-gold"
                 data-cursor
               >
-                <div className={`overflow-hidden ${aspectCycle[i % aspectCycle.length]}`}>
+                <div className={`overflow-hidden rounded-sm bg-muted/20 ${aspectCycle[i % aspectCycle.length]}`}>
                   <img
                     src={item.src}
                     alt={`${item.title} — ${item.category} photography by Utsav Studio`}
@@ -116,8 +166,15 @@ function Portfolio() {
                   />
                 </div>
                 <figcaption className="flex items-baseline justify-between border-b border-border py-4">
-                  <span className="font-display text-xl text-foreground">{item.title}</span>
-                  <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                  <div>
+                    <span className="font-display text-xl text-foreground block">{item.title}</span>
+                    {item.subtitle && (
+                      <span className="text-xs text-muted-foreground/80 mt-0.5 block">
+                        {item.subtitle}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.25em] text-gold font-mono shrink-0 ml-4">
                     {item.category}
                   </span>
                 </figcaption>
@@ -146,11 +203,11 @@ function Portfolio() {
           role="dialog"
           aria-modal="true"
           aria-label={current.title}
-          className="fixed inset-0 z-[115] flex flex-col bg-background/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[115] flex flex-col bg-background/95 backdrop-blur-md"
           onClick={() => setLightbox(null)}
         >
           <div className="flex items-center justify-between px-6 py-5 md:px-10">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-mono">
               {current.category} · {String((lightbox ?? 0) + 1).padStart(2, "0")} /{" "}
               {String(items.length).padStart(2, "0")}
             </span>
@@ -168,14 +225,21 @@ function Portfolio() {
               key={current.src}
               src={current.src}
               alt={`${current.title} — ${current.category} photography by Utsav Studio`}
-              className="max-h-full max-w-full object-contain"
+              className="max-h-full max-w-full object-contain rounded-sm shadow-2xl"
             />
           </div>
 
           <div className="flex items-center justify-between px-6 py-5 md:px-10">
-            <span className="font-display text-xl font-light text-foreground md:text-2xl">
-              {current.title}
-            </span>
+            <div>
+              <span className="font-display text-xl font-light text-foreground md:text-2xl block">
+                {current.title}
+              </span>
+              {current.subtitle && (
+                <span className="text-xs text-muted-foreground mt-0.5 block">
+                  {current.subtitle}
+                </span>
+              )}
+            </div>
             <span className="flex gap-3" onClick={(e) => e.stopPropagation()}>
               <button
                 aria-label="Previous image"
