@@ -1,19 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Youtube } from "lucide-react";
-import { Marquee } from "@/components/motion";
 import { OutlineAnchor } from "@/components/buttons";
 import { contact, navLinks } from "@/lib/media";
 
 export function Footer() {
   return (
     <footer className="grain-surface relative border-t border-border bg-card">
-      <Marquee
-        items={["Utsav Studio", "Est. 1994", "Mira Road East", "Photography & Films"]}
-        duration={38}
-        separator="·"
-        className="border-b border-border py-6 font-display text-4xl font-light text-foreground/80 md:py-8 md:text-6xl"
-      />
-
       <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:px-10 md:py-20">
         <div>
           <img src="/utsav-logo.png" alt="Utsav Morjaria Photography" className="h-16 w-auto object-contain md:h-20" />
