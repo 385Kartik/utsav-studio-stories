@@ -517,13 +517,13 @@ export function CurvedReelScrollExperience({
       antialias: true,
       alpha: true,
       powerPreference: "high-performance",
+      precision: "mediump",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.enabled = false;
 
     if (threeMount) {
       threeMount.replaceChildren(renderer.domElement);
@@ -540,7 +540,6 @@ export function CurvedReelScrollExperience({
 
     const keyLight = new THREE.DirectionalLight(0xfff5e6, 3.5);
     keyLight.position.set(7, 9, 8);
-    keyLight.castShadow = true;
     scene.add(keyLight);
 
     const rimLight = new THREE.DirectionalLight(0x7ac4ff, 2.2);
@@ -621,19 +620,24 @@ export function CurvedReelScrollExperience({
       }
     );
 
-    // ── Screen Projection Math ────────────────────────────────────────
+    // ── Screen Projection Math (Zero Allocation at 60fps) ─────────────
+    const vCorner1 = new THREE.Vector3();
+    const vCorner2 = new THREE.Vector3();
+    const vCorner3 = new THREE.Vector3();
+    const vCorner4 = new THREE.Vector3();
+
     const getScreenPixelBounds = () => {
       screenMesh.updateWorldMatrix(true, false);
       const m = screenMesh.matrixWorld;
       const hw = screenW / 2;
       const hh = screenH / 2;
 
-      const corners = [
-        new THREE.Vector3(-hw, -hh, 0.01).applyMatrix4(m).project(threeCamera),
-        new THREE.Vector3(hw, -hh, 0.01).applyMatrix4(m).project(threeCamera),
-        new THREE.Vector3(hw, hh, 0.01).applyMatrix4(m).project(threeCamera),
-        new THREE.Vector3(-hw, hh, 0.01).applyMatrix4(m).project(threeCamera),
-      ];
+      vCorner1.set(-hw, -hh, 0.01).applyMatrix4(m).project(threeCamera);
+      vCorner2.set(hw, -hh, 0.01).applyMatrix4(m).project(threeCamera);
+      vCorner3.set(hw, hh, 0.01).applyMatrix4(m).project(threeCamera);
+      vCorner4.set(-hw, hh, 0.01).applyMatrix4(m).project(threeCamera);
+
+      const corners = [vCorner1, vCorner2, vCorner3, vCorner4];
 
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       for (const c of corners) {
@@ -702,9 +706,9 @@ export function CurvedReelScrollExperience({
           } else if (p >= 0.32 && p < 0.50) {
             hudModeRef.current.textContent = "[STUDIO STATEMENT · REC.709]";
           } else if (p >= 0.50 && p < 0.72) {
-            hudModeRef.current.textContent = "[SERPENTINE REEL · 14 FRAMES]";
+            hudModeRef.current.textContent = "[SERPENTINE REEL · 10 FRAMES]";
           } else {
-            hudModeRef.current.textContent = "[STORIES CYLINDER · 18 FRAMES]";
+            hudModeRef.current.textContent = "[STORIES CYLINDER · 16 FRAMES]";
           }
         }
 
@@ -854,18 +858,19 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.48 -> 0.74)
+        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.46 -> 0.74, calm default pace)
         if (serpStage) {
-          if (p >= 0.48 && p <= 0.74) {
+          if (p >= 0.46 && p <= 0.74) {
             let ribbonOpacity = 1;
-            if (p < 0.53) ribbonOpacity = (p - 0.48) / 0.05;
+            if (p < 0.51) ribbonOpacity = (p - 0.46) / 0.05;
             else if (p > 0.69) ribbonOpacity = 1 - (p - 0.69) / 0.05;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.48) / 0.22;
+            const ribbonProgress = (p - 0.46) / 0.26;
             serpCards.forEach((card, idx) => {
               const offset = idx / ribbonCount;
-              const cardT = ribbonProgress * 1.9 - offset * 1.0;
+              // Calm, natural speed matched to scroll
+              const cardT = ribbonProgress * 0.96 - offset * 0.62;
               const clampedT = Math.max(0, Math.min(1.08, cardT));
 
               const pt = getSerpentinePoint(clampedT);
@@ -881,7 +886,7 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 10. Layer D: 3D Cylindrical Story Reel (0.70 -> 0.98)
+        // 10. Layer D: 3D Cylindrical Story Reel (0.70 -> 0.98, gentle 135° orbit)
         if (cylStage && cylWrapper) {
           if (p >= 0.70 && p <= 0.98) {
             let reelOpacity = 1;
@@ -890,8 +895,9 @@ export function CurvedReelScrollExperience({
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
             const radius = isMobile ? 170 : Math.min(curScreenW * 0.36, 360);
-            const reelNorm = (p - 0.72) / 0.22;
-            const currentRot = reelNorm * 480;
+            const reelNorm = (p - 0.70) / 0.26;
+            // Default calm rotation speed: 135° total orbit
+            const currentRot = reelNorm * 135;
 
             cylCards.forEach((card, idx) => {
               const baseAngle = (idx / cylinderCount) * 360;
@@ -917,7 +923,7 @@ export function CurvedReelScrollExperience({
           trigger: container,
           start: "top top",
           end: "bottom bottom",
-          scrub: 1,
+          scrub: 0.6,
           invalidateOnRefresh: true,
           onRefresh: () => {
             width = window.innerWidth;
@@ -989,6 +995,13 @@ export function CurvedReelScrollExperience({
     let animId: number;
 
     const renderLoop = () => {
+      // Pause Three.js GPU rendering when scrolled completely out of view
+      const rect = container.getBoundingClientRect();
+      if (rect.bottom < -80 || rect.top > window.innerHeight + 80) {
+        animId = requestAnimationFrame(renderLoop);
+        return;
+      }
+
       // Smooth mouse lerp
       mouseState.x += (mouseState.targetX - mouseState.x) * 0.05;
       mouseState.y += (mouseState.targetY - mouseState.y) * 0.05;
@@ -1037,12 +1050,12 @@ export function CurvedReelScrollExperience({
     };
   }, [items]);
 
-  // Gallery items for ribbon (14 cards) and cylinder (18 cards)
-  const ribbonCards = Array.from({ length: 14 }).map((_, i) => items[i % items.length]);
-  const cylinderCards = Array.from({ length: 18 }).map((_, i) => items[i % items.length]);
+  // Gallery items for ribbon (10 spaced cards) and cylinder (16 cards)
+  const ribbonCards = Array.from({ length: 10 }).map((_, i) => items[i % items.length]);
+  const cylinderCards = Array.from({ length: 16 }).map((_, i) => items[i % items.length]);
 
   return (
-    <section ref={containerRef} data-hero-experience className="relative h-[280vh] md:h-[320vh] bg-background">
+    <section ref={containerRef} data-hero-experience className="relative h-[380vh] md:h-[440vh] bg-background">
       <div
         className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none"
         style={{ perspective: "1300px" }}
