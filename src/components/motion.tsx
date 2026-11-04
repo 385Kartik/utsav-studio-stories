@@ -555,9 +555,9 @@ export function CurvedReelScrollExperience({
         // Viewfinder Display Frame Overlay (Active inside camera screen)
         // ==========================================================
         if (viewfinder) {
-          if (p >= 0.16 && p <= 0.95) {
+          if (p >= 0.20 && p <= 0.95) {
             let vfAlpha = 1;
-            if (p < 0.22) vfAlpha = (p - 0.16) / 0.06;
+            if (p < 0.26) vfAlpha = (p - 0.20) / 0.06;
             else if (p > 0.88) vfAlpha = 1 - (p - 0.88) / 0.07;
             viewfinder.style.opacity = String(Math.max(0, Math.min(1, vfAlpha)));
           } else {
@@ -566,31 +566,31 @@ export function CurvedReelScrollExperience({
         }
 
         // ==========================================================
-        // Phase 2: "Three Decades" Editorial Statement (0.16 -> 0.40)
+        // Phase 2: "Three Decades" Editorial Statement (0.22 -> 0.44)
         // ==========================================================
         if (stmt) {
-          if (p >= 0.16 && p <= 0.40) {
+          if (p >= 0.22 && p <= 0.44) {
             let stmtOpacity = 1;
-            if (p < 0.22) stmtOpacity = (p - 0.16) / 0.06;
-            else if (p > 0.34) stmtOpacity = 1 - (p - 0.34) / 0.06;
+            if (p < 0.28) stmtOpacity = (p - 0.22) / 0.06;
+            else if (p > 0.38) stmtOpacity = 1 - (p - 0.38) / 0.06;
             stmt.style.opacity = String(Math.max(0, stmtOpacity));
-            stmt.style.transform = `translate3d(0, ${(0.28 - p) * 35}px, 0)`;
+            stmt.style.transform = `translate3d(0, ${(0.32 - p) * 35}px, 0)`;
           } else {
             stmt.style.opacity = "0";
           }
         }
 
         // ==========================================================
-        // Phase 3: Serpentine Curved Ribbon (Photos start displaying here!) (0.18 -> 0.54)
+        // Phase 3: Serpentine Curved Ribbon (Photos start displaying here!) (0.24 -> 0.58)
         // ==========================================================
         if (serpStage) {
-          if (p >= 0.18 && p <= 0.54) {
+          if (p >= 0.24 && p <= 0.58) {
             let ribbonOpacity = 1;
-            if (p < 0.24) ribbonOpacity = (p - 0.18) / 0.06;
-            else if (p > 0.46) ribbonOpacity = 1 - (p - 0.46) / 0.08;
+            if (p < 0.30) ribbonOpacity = (p - 0.24) / 0.06;
+            else if (p > 0.50) ribbonOpacity = 1 - (p - 0.50) / 0.08;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.18) / 0.28;
+            const ribbonProgress = (p - 0.24) / 0.28;
             serpCards.forEach((card, idx) => {
               const offset = idx / ribbonCount;
               const cardT = ribbonProgress * 1.5 - offset * 0.7;
@@ -610,17 +610,17 @@ export function CurvedReelScrollExperience({
         }
 
         // ==========================================================
-        // Phase 4: Wide 3D Panoramic Cylinder Reel (Inside Viewfinder) (0.44 -> 0.96)
+        // Phase 4: Wide 3D Panoramic Cylinder Reel (Inside Viewfinder) (0.48 -> 0.96)
         // ==========================================================
         if (cylStage && cylWrapper) {
-          if (p >= 0.44 && p <= 0.98) {
+          if (p >= 0.48 && p <= 0.98) {
             let reelOpacity = 1;
-            if (p < 0.52) reelOpacity = (p - 0.44) / 0.08;
+            if (p < 0.56) reelOpacity = (p - 0.48) / 0.08;
             else if (p > 0.90) reelOpacity = 1 - (p - 0.90) / 0.08;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
             const radius = isMobile ? 260 : Math.min(width * 0.46, 560);
-            const reelNorm = (p - 0.44) / 0.46;
+            const reelNorm = (p - 0.48) / 0.44;
             const currentRot = reelNorm * 540;
 
             cylCards.forEach((card, idx) => {

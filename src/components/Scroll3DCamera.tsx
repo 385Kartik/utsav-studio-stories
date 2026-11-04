@@ -256,7 +256,8 @@ export function Scroll3DCamera() {
       toneMapped: false,
     });
     const screenMesh = new THREE.Mesh(screenGeom, screenMat);
-    screenMesh.position.z = 0.005;
+    screenMesh.position.z = 0.02;
+    screenMesh.renderOrder = 999;
     lcdGroup.add(screenMesh);
 
     // ── GLTF & Draco Loader ───────────────────────────────────────────
@@ -299,6 +300,7 @@ export function Scroll3DCamera() {
               if (mesh.material) {
                 const mat = mesh.material as THREE.MeshStandardMaterial;
                 mat.envMapIntensity = 1.7;
+                mat.transparent = true;
                 mat.needsUpdate = true;
               }
             }
@@ -393,17 +395,17 @@ export function Scroll3DCamera() {
       const breathY = Math.sin(clock * 1.4) * 0.03;
       const breathRot = Math.cos(clock * 1.1) * 0.012;
 
-      // Trigger photo flash burst around p = 0.05 -> 0.07
-      if (p >= 0.05 && p <= 0.09 && !s.hasFlashed) {
+      // Trigger photo flash burst around p = 0.04 -> 0.06
+      if (p >= 0.04 && p <= 0.08 && !s.hasFlashed) {
         s.hasFlashed = true;
         setFlashTrigger(true);
         setTimeout(() => setFlashTrigger(false), 240);
-      } else if (p < 0.03) {
+      } else if (p < 0.02) {
         s.hasFlashed = false;
       }
 
       if (!isInteractive) {
-        if (p <= 0.06) {
+        if (p <= 0.05) {
           // Phase A: Aiming at scene below the main headline, locking focus
           setHudPhase("aim");
           lcdGroup.visible = false; // Never show LCD from the front in hero!
@@ -412,42 +414,83 @@ export function Scroll3DCamera() {
           masterPivot.scale.setScalar(0.65);
           mount.style.opacity = "1";
           mount.style.pointerEvents = "none";
-        } else if (p > 0.06 && p <= 0.18) {
+
+          // Ensure chassis is fully visible
+          if (modelsCacheRef.current[activeModel]) {
+            modelsCacheRef.current[activeModel].traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                if (mat) mat.opacity = 1;
+              }
+            });
+          }
+        } else if (p > 0.05 && p <= 0.14) {
           // Phase B: Flip 180° on Y & elevate to center — Ooltah Ghumna! Display reveals photo!
           setHudPhase("flip");
-          const factor = (p - 0.06) / 0.12;
+          const factor = (p - 0.05) / 0.09;
           const eased = (1 - Math.cos(factor * Math.PI)) / 2;
 
           // Reveal LCD once rotating towards viewer
-          lcdGroup.visible = factor > 0.15;
+          lcdGroup.visible = factor > 0.12;
 
           const rotY = -0.12 + eased * (Math.PI + 0.12); // -0.12 to 180° (Math.PI)
           const posY = -1.38 + eased * 1.38; // Elevates from -1.38 to 0.0 center
-          const posZ = 1.05 + eased * 0.85; // Gently elevates from 1.05 to 1.90
-          const scale = 0.65 + eased * 0.42; // Scales to 1.07
+          const posZ = 1.05 + eased * 0.65; // 1.05 to 1.70
+          const scale = 0.65 + eased * 0.40; // 0.65 to 1.05
 
           masterPivot.position.set(0.0 + s.mouseX * 0.12, posY - s.mouseY * 0.08 + breathY, posZ);
           masterPivot.rotation.set(0.02 - s.mouseY * 0.04, rotY + s.mouseX * 0.06, 0);
           masterPivot.scale.setScalar(scale);
           mount.style.opacity = "1";
           mount.style.pointerEvents = "none";
-        } else if (p > 0.18 && p <= 0.24) {
-          // Phase C: STOP ZOOMING HERE! Camera screen freezes in center, seamless crossfade to photos
+
+          if (modelsCacheRef.current[activeModel]) {
+            modelsCacheRef.current[activeModel].traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                if (mat) mat.opacity = 1;
+              }
+            });
+          }
+        } else if (p > 0.14 && p <= 0.25) {
+          // Phase C: CAMERA MOVES FORWARD, LCD EXPANDS TO FULL SCREEN!
           setHudPhase("zoom");
           lcdGroup.visible = true;
 
-          // Freeze position and scale — DO NOT zoom deeper into the copper chassis!
-          masterPivot.position.set(0.0, 0.0, 1.90);
-          masterPivot.rotation.set(0.0, Math.PI, 0);
-          masterPivot.scale.setScalar(1.07);
+          const factor = (p - 0.14) / 0.11;
+          const eased = factor * factor; // Smooth forward zoom into viewport
 
-          // Smoothly crossfade out 3D chassis so the fullscreen viewfinder and photos take over
-          const fadeFactor = (p - 0.18) / 0.06;
-          mount.style.opacity = String(Math.max(0, 1 - fadeFactor));
+          // Moves forward (posZ: 1.70 -> 2.95) and scales up (1.05 -> 2.60)
+          // The LCD screen expands until it covers 100% of the viewport!
+          const posZ = 1.70 + eased * 1.25;
+          const scale = 1.05 + eased * 1.55;
+
+          masterPivot.position.set(0.0, 0.0, posZ);
+          masterPivot.rotation.set(0.0, Math.PI, 0);
+          masterPivot.scale.setScalar(scale);
+
+          // Dissolve camera chassis so only the clean LCD screen expands to the edges
+          if (modelsCacheRef.current[activeModel]) {
+            const chassisFade = Math.max(0, 1 - factor * 1.5);
+            modelsCacheRef.current[activeModel].traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                if (mat) mat.opacity = chassisFade;
+              }
+            });
+          }
+
+          // At p >= 0.22, the LCD screen borders reach viewport edges; crossfade to 2D Viewfinder
+          if (p >= 0.22) {
+            const crossfade = Math.max(0, 1 - (p - 0.22) / 0.03);
+            mount.style.opacity = String(crossfade);
+          } else {
+            mount.style.opacity = "1";
+          }
           mount.style.pointerEvents = "none";
         } else {
           // Phase D & Beyond: Inside the Viewfinder & Rest of the Website!
-          // Camera stays completely hidden so all photos, ribbon & cylinder reel display cleanly!
+          // Camera display is now 100% full screen — all photos display inside it!
           setHudPhase("inside");
           lcdGroup.visible = false;
           mount.style.opacity = "0";
