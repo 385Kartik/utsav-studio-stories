@@ -665,7 +665,9 @@ export function CurvedReelScrollExperience({
       const mHeight = curScreenH;
 
       // x: Center coordinate travels smoothly from right to left across camera screen
-      const x = mWidth * 1.15 - t * (mWidth * 1.30);
+      // spanX is calibrated with card width for exactly 15% overlap
+      const spanX = mWidth * 1.35;
+      const x = mWidth * 1.175 - t * spanX;
 
       // y: Centered vertically in the camera screen with a gentle harmonic wave
       const waveY = Math.sin(t * Math.PI * 1.5) * (isMobile ? mHeight * 0.035 : mHeight * 0.045);
@@ -710,9 +712,9 @@ export function CurvedReelScrollExperience({
           } else if (p >= 0.32 && p < 0.50) {
             hudModeRef.current.textContent = "[STUDIO STATEMENT · REC.709]";
           } else if (p >= 0.50 && p < 0.72) {
-            hudModeRef.current.textContent = "[SERPENTINE REEL · 8 FRAMES]";
+            hudModeRef.current.textContent = "[SERPENTINE REEL · 7 FRAMES]";
           } else {
-            hudModeRef.current.textContent = "[STORIES CYLINDER · 16 FRAMES]";
+            hudModeRef.current.textContent = "[STORIES CYLINDER · 8 FRAMES]";
           }
         }
 
@@ -862,7 +864,7 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.46 -> 0.74, calm default pace)
+        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.46 -> 0.74, 15% overlap)
         if (serpStage) {
           if (p >= 0.46 && p <= 0.74) {
             let ribbonOpacity = 1;
@@ -872,10 +874,12 @@ export function CurvedReelScrollExperience({
 
             const ribbonProgress = (p - 0.46) / 0.28;
             serpCards.forEach((card, idx) => {
-              // Generous spacing between cards so photos are clearly visible without tight overlapping
-              const spacing = 0.22;
-              const cardT = ribbonProgress * 2.2 - idx * spacing + 0.35;
-              const clampedT = Math.max(-0.25, Math.min(1.25, cardT));
+              // 15% overlap between adjacent cards: spacing = 0.214
+              const spacing = 0.214;
+              // 1 wheel scroll step = 1 photo change!
+              // Card idx is dead-center (cardT = 0.50) when ribbonProgress = idx / 6
+              const cardT = 0.50 + (ribbonProgress - idx / 6) * (6 * spacing);
+              const clampedT = Math.max(-0.35, Math.min(1.35, cardT));
 
               const pt = getSerpentinePoint(clampedT);
               const scale = (isMobile ? 0.95 : 1.05) + pt.centerFactor * 0.18;
@@ -897,18 +901,20 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 10. Layer D: 3D Cylindrical Story Reel (0.70 -> 0.98, gentle 135° orbit)
+        // 10. Layer D: 3D Cylindrical Story Reel (0.72 -> 0.98, spacious & large)
         if (cylStage && cylWrapper) {
-          if (p >= 0.70 && p <= 0.98) {
+          if (p >= 0.72 && p <= 0.98) {
             let reelOpacity = 1;
-            if (p < 0.75) reelOpacity = (p - 0.70) / 0.05;
-            else if (p > 0.94) reelOpacity = 1 - (p - 0.94) / 0.04;
+            if (p < 0.76) reelOpacity = (p - 0.72) / 0.04;
+            else if (p > 0.95) reelOpacity = 1 - (p - 0.95) / 0.03;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
-            const radius = isMobile ? 170 : Math.min(curScreenW * 0.36, 360);
-            const reelNorm = (p - 0.70) / 0.26;
-            // Default calm rotation speed: 135° total orbit
-            const currentRot = reelNorm * 135;
+            const cylinderCount = cylCards.length || 8;
+            // Generous radius so cards never intersect or collide
+            const radius = isMobile ? 190 : Math.min(curScreenW * 0.42, 420);
+            const reelNorm = (p - 0.72) / 0.24;
+            // Rotate through cards: each wheel notch advances 45° (one full card!)
+            const currentRot = reelNorm * 180;
 
             cylCards.forEach((card, idx) => {
               const baseAngle = (idx / cylinderCount) * 360;
@@ -917,12 +923,13 @@ export function CurvedReelScrollExperience({
               const x = Math.sin(rad) * radius;
               const z = Math.cos(rad) * radius;
 
-              card.style.transform = `translate3d(${x}px, 0px, ${z}px) rotateY(${cardDeg}deg)`;
-              const depthAlpha = 0.38 + ((z + radius) / (radius * 2)) * 0.62;
+              card.style.transform = `translate3d(${x}px, 0px, ${z}px) translate(-50%, -50%) rotateY(${cardDeg}deg)`;
+              const depthAlpha = 0.22 + ((z + radius) / (radius * 2)) * 0.78;
               card.style.opacity = String(depthAlpha);
+              card.style.zIndex = String(Math.round(z + 500));
             });
 
-            cylWrapper.style.transform = `rotateX(${isMobile ? 5 : 8}deg) rotateZ(-1deg)`;
+            cylWrapper.style.transform = `rotateX(${isMobile ? 4 : 7}deg) rotateZ(-1deg)`;
           } else {
             cylStage.style.opacity = "0";
           }
@@ -935,6 +942,26 @@ export function CurvedReelScrollExperience({
           start: "top top",
           end: "bottom bottom",
           scrub: 0.6,
+          snap: {
+            snapTo: (value) => {
+              // 1. Serpentine Ribbon Stage (0.46 -> 0.74): 1 mouse wheel notch = 1 photo!
+              if (value >= 0.45 && value <= 0.75) {
+                const ribbonNorm = Math.max(0, Math.min(1, (value - 0.46) / 0.28));
+                const step = Math.round(ribbonNorm * 6) / 6;
+                return 0.46 + step * 0.28;
+              }
+              // 2. Cylinder Reel Stage (0.72 -> 0.98): 1 mouse wheel notch = 1 cylinder card!
+              if (value > 0.75 && value <= 0.98) {
+                const cylNorm = Math.max(0, Math.min(1, (value - 0.72) / 0.24));
+                const step = Math.round(cylNorm * 4) / 4;
+                return 0.72 + step * 0.24;
+              }
+              return value;
+            },
+            duration: { min: 0.15, max: 0.35 },
+            delay: 0.04,
+            ease: "power2.out",
+          },
           invalidateOnRefresh: true,
           onRefresh: () => {
             width = window.innerWidth;
@@ -1061,9 +1088,9 @@ export function CurvedReelScrollExperience({
     };
   }, [items]);
 
-  // Gallery items for ribbon (8 spaced hero cards) and cylinder (16 cards)
-  const ribbonCards = Array.from({ length: 8 }).map((_, i) => items[i % items.length]);
-  const cylinderCards = Array.from({ length: 16 }).map((_, i) => items[i % items.length]);
+  // Gallery items for ribbon (7 spaced hero cards) and cylinder (8 spacious 3D cards)
+  const ribbonCards = Array.from({ length: 7 }).map((_, i) => items[i % items.length]);
+  const cylinderCards = Array.from({ length: 8 }).map((_, i) => items[i % items.length]);
 
   return (
     <section ref={containerRef} data-hero-experience className="relative h-[380vh] md:h-[440vh] bg-background">
@@ -1209,10 +1236,10 @@ export function CurvedReelScrollExperience({
               {ribbonCards.map((item, idx) => (
                 <div
                   key={`ribbon-${idx}`}
-                  className="absolute left-0 top-0 w-[clamp(150px,35cqw,295px)] p-[clamp(7px,1.4cqw,13px)] rounded-xl md:rounded-2xl bg-[#13110f]/95 border border-gold/30 shadow-[0_16px_40px_rgba(0,0,0,0.85)] backdrop-blur-md will-change-transform pointer-events-auto"
+                  className="absolute left-0 top-0 w-[clamp(155px,34cqw,290px)] p-[clamp(7px,1.4cqw,13px)] rounded-xl md:rounded-2xl bg-[#13110f]/95 border border-gold/30 shadow-[0_16px_40px_rgba(0,0,0,0.85)] backdrop-blur-md will-change-transform pointer-events-auto"
                 >
                   <div className="flex items-center justify-between pb-[1cqw] px-0.5 text-[clamp(7.5px,1.35cqw,11px)] font-mono tracking-widest text-muted-foreground border-b border-white/10">
-                    <span>UTSAV #{String((idx % 8) + 1).padStart(2, "0")}</span>
+                    <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
                     <span className="text-gold font-semibold">• 35MM PRIME</span>
                   </div>
                   <div className="w-full aspect-[4/5] mt-[1.2cqw] rounded-lg overflow-hidden bg-muted/20 relative shadow-inner">
@@ -1254,20 +1281,20 @@ export function CurvedReelScrollExperience({
             {/* Cylinder reel */}
             <div
               ref={cylinderWrapperRef}
-              className="relative w-[clamp(120px,26cqw,210px)] h-[clamp(160px,34cqw,260px)] mt-[clamp(24px,6cqw,56px)]"
+              className="relative w-[clamp(160px,26cqw,240px)] h-[clamp(220px,36cqw,330px)] mt-[clamp(16px,3cqw,36px)]"
               style={{ transformStyle: "preserve-3d" }}
             >
               {cylinderCards.map((item, idx) => (
                 <div
                   key={`cyl-${idx}`}
-                  className="absolute left-0 top-0 w-[clamp(100px,22cqw,170px)] will-change-transform pointer-events-auto"
+                  className="absolute left-0 top-0 w-[clamp(150px,24cqw,225px)] will-change-transform pointer-events-auto"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   <Crazy3DCard
                     src={item.src}
                     title={item.title}
                     category={item.category}
-                    frameNumber={`FRAME #${String((idx % 7) + 1).padStart(2, "0")}`}
+                    frameNumber={`FRAME #${String((idx % 8) + 1).padStart(2, "0")}`}
                     showBadge={idx === 0 || idx === 1}
                   />
                 </div>
