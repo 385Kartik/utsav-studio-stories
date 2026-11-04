@@ -43,11 +43,11 @@ export function Anime3DToolbox() {
     // ── Three.js Scene Setup ──────────────────────────────────────────
     const scene = new THREE.Scene();
 
-    let width = mount.clientWidth || 900;
-    let height = mount.clientHeight || 600;
+    let width = mount.clientWidth || 1000;
+    let height = mount.clientHeight || 640;
 
-    const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
-    camera.position.set(0, 0, 12);
+    const camera = new THREE.PerspectiveCamera(26, width / height, 0.1, 100);
+    camera.position.set(0, 0.2, 16);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -318,13 +318,17 @@ export function Anime3DToolbox() {
 
     // ── 60fps Animation Loop ──────────────────────────────────────────
     let animId: number;
+    let clock = 0;
 
     const tick = () => {
+      clock += 0.015;
       const s = animStateRef.current;
 
       if (s.autoSpin && !s.isDragging) {
-        s.rotY -= 0.0035;
-        lensMasterGroup.rotation.set(s.rotX, s.rotY, s.rotZ);
+        // Subtle, elegant oscillation that preserves the diagonal exploded CAD perspective
+        const oscY = -0.65 + Math.sin(clock * 0.45) * 0.14;
+        const oscX = 0.30 + Math.cos(clock * 0.35) * 0.05;
+        lensMasterGroup.rotation.set(oscX, oscY, 0.06);
       } else {
         lensMasterGroup.rotation.set(s.rotX, s.rotY, s.rotZ);
       }

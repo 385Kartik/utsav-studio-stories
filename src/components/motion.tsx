@@ -466,6 +466,7 @@ export function CurvedReelScrollExperience({
   const serpentineTrackRef = useRef<HTMLDivElement>(null);
   const cylinderStageRef = useRef<HTMLDivElement>(null);
   const cylinderWrapperRef = useRef<HTMLDivElement>(null);
+  const viewfinderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     ensureGsap();
@@ -489,6 +490,7 @@ export function CurvedReelScrollExperience({
     const cylStage = cylinderStageRef.current;
     const cylWrapper = cylinderWrapperRef.current;
     const cylCards = cylWrapper ? (Array.from(cylWrapper.children) as HTMLElement[]) : [];
+    const viewfinder = viewfinderRef.current;
 
     const ribbonCount = serpCards.length;
     const cylinderCount = cylCards.length;
@@ -522,11 +524,11 @@ export function CurvedReelScrollExperience({
 
       const applyFrame = (p: number) => {
         // ==========================================================
-        // Phase 1: Hero 3D Page-Fold & Squeeze (0.00 -> 0.24)
+        // Phase 1: Hero 3D Page-Fold & Squeeze (0.00 -> 0.20)
         // ==========================================================
         if (heroWrap) {
-          if (p <= 0.24) {
-            const norm = p / 0.24;
+          if (p <= 0.20) {
+            const norm = p / 0.20;
             const squeezeX = 1 - norm * 0.32; // Horizontal squeeze
             const squeezeY = 1 + norm * 0.10; // Vertical stretch
             const rotateX = norm * 45; // 3D page fold forward
@@ -550,31 +552,45 @@ export function CurvedReelScrollExperience({
         }
 
         // ==========================================================
-        // Phase 2: "Three Decades" Editorial Statement (0.16 -> 0.48)
+        // Viewfinder Display Frame Overlay (Active inside camera screen)
+        // ==========================================================
+        if (viewfinder) {
+          if (p >= 0.24 && p <= 0.95) {
+            let vfAlpha = 1;
+            if (p < 0.36) vfAlpha = (p - 0.24) / 0.12;
+            else if (p > 0.88) vfAlpha = 1 - (p - 0.88) / 0.07;
+            viewfinder.style.opacity = String(Math.max(0, Math.min(1, vfAlpha)));
+          } else {
+            viewfinder.style.opacity = "0";
+          }
+        }
+
+        // ==========================================================
+        // Phase 2: "Three Decades" Editorial Statement (0.22 -> 0.46)
         // ==========================================================
         if (stmt) {
-          if (p >= 0.14 && p <= 0.48) {
+          if (p >= 0.22 && p <= 0.46) {
             let stmtOpacity = 1;
-            if (p < 0.24) stmtOpacity = (p - 0.14) / 0.10;
-            else if (p > 0.38) stmtOpacity = 1 - (p - 0.38) / 0.10;
+            if (p < 0.30) stmtOpacity = (p - 0.22) / 0.08;
+            else if (p > 0.38) stmtOpacity = 1 - (p - 0.38) / 0.08;
             stmt.style.opacity = String(Math.max(0, stmtOpacity));
-            stmt.style.transform = `translate3d(0, ${(0.28 - p) * 35}px, 0)`;
+            stmt.style.transform = `translate3d(0, ${(0.34 - p) * 35}px, 0)`;
           } else {
             stmt.style.opacity = "0";
           }
         }
 
         // ==========================================================
-        // Phase 3: Serpentine Curved Ribbon (Ref 1) (0.14 -> 0.50)
+        // Phase 3: Serpentine Curved Ribbon (Inside Viewfinder) (0.32 -> 0.62)
         // ==========================================================
         if (serpStage) {
-          if (p >= 0.12 && p <= 0.52) {
+          if (p >= 0.30 && p <= 0.64) {
             let ribbonOpacity = 1;
-            if (p < 0.20) ribbonOpacity = (p - 0.12) / 0.08;
-            else if (p > 0.42) ribbonOpacity = 1 - (p - 0.42) / 0.10;
+            if (p < 0.38) ribbonOpacity = (p - 0.30) / 0.08;
+            else if (p > 0.54) ribbonOpacity = 1 - (p - 0.54) / 0.10;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.12) / 0.36;
+            const ribbonProgress = (p - 0.30) / 0.30;
             serpCards.forEach((card, idx) => {
               const offset = idx / ribbonCount;
               const cardT = ribbonProgress * 1.5 - offset * 0.7;
@@ -594,17 +610,17 @@ export function CurvedReelScrollExperience({
         }
 
         // ==========================================================
-        // Phase 4: Wide 3D Panoramic Bundle Reel (Ref 2) (0.40 -> 1.0)
+        // Phase 4: Wide 3D Panoramic Cylinder Reel (Inside Viewfinder) (0.52 -> 0.96)
         // ==========================================================
         if (cylStage && cylWrapper) {
-          if (p >= 0.40 && p <= 1.0) {
+          if (p >= 0.50 && p <= 0.98) {
             let reelOpacity = 1;
-            if (p < 0.50) reelOpacity = (p - 0.40) / 0.10;
-            else if (p > 0.94) reelOpacity = 1 - (p - 0.94) / 0.06;
+            if (p < 0.60) reelOpacity = (p - 0.50) / 0.10;
+            else if (p > 0.92) reelOpacity = 1 - (p - 0.92) / 0.06;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
             const radius = isMobile ? 260 : Math.min(width * 0.46, 560);
-            const reelNorm = (p - 0.40) / 0.56;
+            const reelNorm = (p - 0.50) / 0.44;
             const currentRot = reelNorm * 540;
 
             cylCards.forEach((card, idx) => {
@@ -755,7 +771,7 @@ export function CurvedReelScrollExperience({
   const cylinderCards = Array.from({ length: 18 }).map((_, i) => items[i % items.length]);
 
   return (
-    <section ref={containerRef} className="relative h-[125vh] md:h-[135vh] bg-background">
+    <section ref={containerRef} data-hero-experience className="relative h-[260vh] md:h-[300vh] bg-background">
       <div
         className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none"
         style={{ perspective: "1300px" }}
@@ -898,6 +914,62 @@ export function CurvedReelScrollExperience({
             <OutlineButton to="/portfolio">
               View full portfolio
             </OutlineButton>
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------ */}
+        {/* CINEMA VIEWFINDER DISPLAY OVERLAY (Inside Camera Screen)     */}
+        {/* ------------------------------------------------------------ */}
+        <div
+          ref={viewfinderRef}
+          className="pointer-events-none absolute inset-0 z-30 opacity-0 transition-opacity duration-150 select-none flex flex-col justify-between p-4 md:p-8"
+        >
+          {/* Top Letterbox Bar */}
+          <div className="flex items-center justify-between text-[10px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-lg border border-gold/30 shadow-2xl">
+            <div className="flex items-center gap-2.5">
+              <span className="size-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
+              <span className="font-bold text-white tracking-wider">REC</span>
+              <span className="text-white/70">00:19:94:24</span>
+              <span className="hidden sm:inline text-gold/40">·</span>
+              <span className="hidden sm:inline text-gold font-medium">4K CINE LOG</span>
+            </div>
+            <div className="flex items-center gap-3 text-white/80">
+              <span>f/1.4</span>
+              <span>1/250s</span>
+              <span className="text-gold font-bold">ISO 100</span>
+              <span className="text-emerald-400">98% 🔋</span>
+            </div>
+          </div>
+
+          {/* Golden Viewfinder Framing Reticle & Grid Lines */}
+          <div className="absolute inset-8 md:inset-14 pointer-events-none">
+            {/* 4 Golden Corner Brackets */}
+            <div className="absolute top-0 left-0 w-8 md:w-16 h-8 md:h-16 border-t-2 border-l-2 border-gold/70" />
+            <div className="absolute top-0 right-0 w-8 md:w-16 h-8 md:h-16 border-t-2 border-r-2 border-gold/70" />
+            <div className="absolute bottom-0 left-0 w-8 md:w-16 h-8 md:h-16 border-b-2 border-l-2 border-gold/70" />
+            <div className="absolute bottom-0 right-0 w-8 md:w-16 h-8 md:h-16 border-b-2 border-r-2 border-gold/70" />
+
+            {/* Subtle Rule-of-Thirds Grid */}
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-15">
+              <div className="border-r border-b border-white" />
+              <div className="border-r border-b border-white" />
+              <div className="border-b border-white" />
+              <div className="border-r border-b border-white" />
+              <div className="border-r border-b border-white" />
+              <div className="border-b border-white" />
+            </div>
+          </div>
+
+          {/* Bottom Letterbox Bar */}
+          <div className="flex items-center justify-between text-[10px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-lg border border-gold/30 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <span className="text-white font-semibold">UTSAV STUDIO</span>
+              <span className="text-muted-foreground hidden sm:inline">MIRA ROAD EAST · EST. 1994</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-gold">PLAYBACK REEL</span>
+              <span className="text-white/60">[18 CINE FRAMES]</span>
+            </div>
           </div>
         </div>
 

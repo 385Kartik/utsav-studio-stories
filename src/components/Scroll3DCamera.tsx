@@ -6,42 +6,48 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { Camera, Orbit, Sparkles, RefreshCw, EyeOff, Eye } from "lucide-react";
+import heroImage from "@/assets/hero.jpg";
 
 /**
  * Scroll3DCamera
  * ───────────────
- * A photorealistic, high-fidelity 3D Studio Camera that moves, rotates,
- * and frames dynamically as the user scrolls across Utsav Studio.
+ * Cinematic Storytelling 3D Camera:
  *
- * • Loads real PBR 3D models (Steampunk Cine & Vintage Field Camera)
- * • Studio ACES Filmic tone mapping + RoomEnvironment HDRI reflections
- * • Non-blocking scroll waypoints tucked into layout negative spaces
- * • 60fps cosine-eased trajectory lerping + mouse parallax micro-tilt
- * • Interactive 3D Orbit mode (drag to spin 360°)
- * • Model switching & Flash burst trigger
+ * 1. HERO (p: 0.0 -> 0.08):
+ *    Camera aims forward toward the scene / couple.
+ *    Focus reticle locks. Shutter clicks down and studio flash burst fires (*SNAP!*).
+ *
+ * 2. THE 180° FLIP (p: 0.08 -> 0.22):
+ *    Camera spins 180° around Y to face its back toward the viewer.
+ *    The back illuminated LCD display screen turns on, showcasing the newly clicked photo
+ *    with live cinema HUD telemetry (ISO 100, 1/250s, f/1.4, 4K CINE LOG, battery, audio VU).
+ *
+ * 3. ZOOM INTO FULLSCREEN (p: 0.22 -> 0.38):
+ *    Camera moves forward toward the viewer, smoothly expanding the LCD monitor
+ *    until it fills 100% of the screen. Bezels slide off-viewport.
+ *
+ * 4. PHOTO SHOWCASE INSIDE VIEWFINDER (p: 0.38 -> 0.90):
+ *    The photo reel and 3D wheel are displayed INSIDE this camera viewfinder screen!
+ *
+ * 5. COMPANION DOCK (p > 0.90):
+ *    Camera smoothly glides into the bottom-right corner as a sleek, non-intrusive 3D companion.
  */
 
 type CameraModelKey = "steampunk" | "antique";
 
-interface Waypoint {
-  p: number;
-  pos: [number, number, number];
-  rot: [number, number, number];
-  scale: number;
-}
-
 export function Scroll3DCamera() {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isInteractive, setIsInteractive] = useState(false);
-  const [scrollPercent, setScrollPercent] = useState(0);
   const [activeModel, setActiveModel] = useState<CameraModelKey>("steampunk");
   const [isDocked, setIsDocked] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [flashTrigger, setFlashTrigger] = useState(false);
+  const [hudPhase, setHudPhase] = useState<"aim" | "flip" | "zoom" | "inside" | "docked">("aim");
 
   const stateRef = useRef({
-    scrollProgress: 0,
-    targetProgress: 0,
+    heroP: 0,
+    targetHeroP: 0,
+    globalScrollP: 0,
     mouseX: 0,
     mouseY: 0,
     targetMouseX: 0,
@@ -51,10 +57,12 @@ export function Scroll3DCamera() {
     orbitY: 0,
     lastX: 0,
     lastY: 0,
+    hasFlashed: false,
   });
 
-  const modelPivotRef = useRef<THREE.Group | null>(null);
+  const masterPivotRef = useRef<THREE.Group | null>(null);
   const modelsCacheRef = useRef<Record<string, THREE.Group>>({});
+  const lcdTextureRef = useRef<THREE.CanvasTexture | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -76,7 +84,7 @@ export function Scroll3DCamera() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     mount.appendChild(renderer.domElement);
 
     // ── Studio PBR Environment Reflections ────────────────────────────
@@ -85,47 +93,183 @@ export function Scroll3DCamera() {
     const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environment = envTexture;
 
-    // ── Cinematic 3-Point Lighting ────────────────────────────────────
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+    // ── Cinematic 3-Point Studio Lighting ─────────────────────────────
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambientLight);
 
-    // Key Light (Warm 3200K Studio Tungsten)
-    const keyLight = new THREE.DirectionalLight(0xfff1dc, 3.2);
+    const keyLight = new THREE.DirectionalLight(0xfff5e6, 3.4);
     keyLight.position.set(7, 9, 8);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
     scene.add(keyLight);
 
-    // Rim Light (Teal/Silver Backlight)
-    const rimLight = new THREE.DirectionalLight(0x7ac4ff, 2.0);
+    const rimLight = new THREE.DirectionalLight(0x7ac4ff, 2.2);
     rimLight.position.set(-8, -4, -6);
     scene.add(rimLight);
 
-    // Warm Gold Fill Light
-    const fillLight = new THREE.DirectionalLight(0xd4a359, 2.4);
-    fillLight.position.set(-5, 6, 4);
-    scene.add(fillLight);
+    const goldFill = new THREE.DirectionalLight(0xd4a359, 2.4);
+    goldFill.position.set(-5, 6, 4);
+    scene.add(goldFill);
 
     // ── Master Camera Pivot ───────────────────────────────────────────
     const masterPivot = new THREE.Group();
     scene.add(masterPivot);
-    modelPivotRef.current = masterPivot;
+    masterPivotRef.current = masterPivot;
 
-    // ── GLTF & Draco Loader Setup ─────────────────────────────────────
+    // ── Build High-Tech LCD Monitor on the Back of Camera ─────────────
+    const screenWidth = 1.35;
+    const screenHeight = 0.88;
+
+    const lcdGroup = new THREE.Group();
+    // Position on back chassis, proud of bolt heads
+    lcdGroup.position.set(0.0, -0.05, -1.04);
+    lcdGroup.rotation.y = Math.PI;
+    lcdGroup.visible = false; // Hidden when facing forward in hero
+    masterPivot.add(lcdGroup);
+
+    // Beveled Screen Bezel (Dark Titanium)
+    const bezelGeom = new THREE.BoxGeometry(screenWidth + 0.08, screenHeight + 0.08, 0.02);
+    const bezelMat = new THREE.MeshStandardMaterial({
+      color: 0x111113,
+      metalness: 0.9,
+      roughness: 0.25,
+    });
+    const bezelMesh = new THREE.Mesh(bezelGeom, bezelMat);
+    bezelMesh.position.z = -0.01;
+    lcdGroup.add(bezelMesh);
+
+    // Offscreen Canvas for Dynamic LCD Display Texture
+    const lcdCanvas = document.createElement("canvas");
+    lcdCanvas.width = 1024;
+    lcdCanvas.height = 720;
+    const lcdCtx = lcdCanvas.getContext("2d")!;
+
+    const lcdTexture = new THREE.CanvasTexture(lcdCanvas);
+    lcdTexture.colorSpace = THREE.SRGBColorSpace;
+    lcdTextureRef.current = lcdTexture;
+
+    // Load preview photo
+    const previewImg = new Image();
+    previewImg.crossOrigin = "anonymous";
+    previewImg.src = heroImage;
+    let imgLoaded = false;
+    previewImg.onload = () => {
+      imgLoaded = true;
+      renderLcdScreen();
+    };
+
+    const renderLcdScreen = () => {
+      const w = lcdCanvas.width;
+      const h = lcdCanvas.height;
+
+      // Draw photo or luxury background
+      if (imgLoaded) {
+        lcdCtx.drawImage(previewImg, 0, 0, w, h);
+      } else {
+        const grad = lcdCtx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, "#1c1917");
+        grad.addColorStop(1, "#0c0a09");
+        lcdCtx.fillStyle = grad;
+        lcdCtx.fillRect(0, 0, w, h);
+      }
+
+      // Subtle cinema contrast tint
+      lcdCtx.fillStyle = "rgba(0, 0, 0, 0.35)";
+      lcdCtx.fillRect(0, 0, w, h);
+
+      // Top Status Bar
+      lcdCtx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      lcdCtx.fillRect(0, 0, w, 58);
+
+      // Red Record Dot
+      lcdCtx.fillStyle = "#ef4444";
+      lcdCtx.beginPath();
+      lcdCtx.arc(36, 29, 8, 0, Math.PI * 2);
+      lcdCtx.fill();
+
+      lcdCtx.fillStyle = "#ffffff";
+      lcdCtx.font = "bold 18px monospace";
+      lcdCtx.fillText("REC  00:19:94:24", 56, 36);
+
+      lcdCtx.fillStyle = "#d4a359";
+      lcdCtx.font = "bold 16px monospace";
+      lcdCtx.fillText("4K CINE LOG · 24FPS", w / 2 - 110, 36);
+
+      // Battery & RAW on top right
+      lcdCtx.fillStyle = "#34d399";
+      lcdCtx.fillText("98% 🔋  [RAW+LOG]", w - 210, 36);
+
+      // Center Rule-of-Thirds Grid Lines
+      lcdCtx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+      lcdCtx.lineWidth = 1;
+      lcdCtx.beginPath();
+      lcdCtx.moveTo(w / 3, 58);
+      lcdCtx.lineTo(w / 3, h - 58);
+      lcdCtx.moveTo((w * 2) / 3, 58);
+      lcdCtx.lineTo((w * 2) / 3, h - 58);
+      lcdCtx.moveTo(0, h / 3);
+      lcdCtx.lineTo(w, h / 3);
+      lcdCtx.moveTo(0, (h * 2) / 3);
+      lcdCtx.lineTo(w, (h * 2) / 3);
+      lcdCtx.stroke();
+
+      // Golden Center Autofocus Reticle [ + ]
+      lcdCtx.strokeStyle = "#d4a359";
+      lcdCtx.lineWidth = 2.5;
+      const cx = w / 2;
+      const cy = h / 2;
+      const rSize = 38;
+      lcdCtx.strokeRect(cx - rSize, cy - rSize, rSize * 2, rSize * 2);
+      lcdCtx.beginPath();
+      lcdCtx.moveTo(cx - 10, cy);
+      lcdCtx.lineTo(cx + 10, cy);
+      lcdCtx.moveTo(cx, cy - 10);
+      lcdCtx.lineTo(cx, cy + 10);
+      lcdCtx.stroke();
+
+      // Bottom Metadata Bar
+      lcdCtx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      lcdCtx.fillRect(0, h - 58, w, 58);
+
+      lcdCtx.fillStyle = "#ffffff";
+      lcdCtx.font = "17px monospace";
+      lcdCtx.fillText("1/250s", 36, h - 22);
+      lcdCtx.fillText("f/1.4", 160, h - 22);
+
+      lcdCtx.fillStyle = "#d4a359";
+      lcdCtx.fillText("ISO 100", 280, h - 22);
+
+      lcdCtx.fillStyle = "#94a3b8";
+      lcdCtx.fillText("35MM PRIME · UTSAV", w / 2 - 95, h - 22);
+
+      lcdCtx.fillStyle = "#facc15";
+      lcdCtx.fillText("AF-C · EYE-TRACK", w - 210, h - 22);
+
+      lcdTexture.needsUpdate = true;
+    };
+
+    renderLcdScreen();
+
+    // Screen Mesh with self-illuminated material
+    const screenGeom = new THREE.PlaneGeometry(screenWidth, screenHeight);
+    const screenMat = new THREE.MeshBasicMaterial({
+      map: lcdTexture,
+      toneMapped: false,
+    });
+    const screenMesh = new THREE.Mesh(screenGeom, screenMat);
+    screenMesh.position.z = 0.005;
+    lcdGroup.add(screenMesh);
+
+    // ── GLTF & Draco Loader ───────────────────────────────────────────
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("/draco/gltf/");
 
     const gltfLoader = new GLTFLoader();
     gltfLoader.setDRACOLoader(dracoLoader);
 
-    // Helper: Load & Center GLB Model
     const loadModel = (url: string, key: string, targetSize = 2.4) => {
       if (modelsCacheRef.current[key]) {
-        // Swap to cached model
-        while (masterPivot.children.length > 0) {
-          masterPivot.remove(masterPivot.children[0]);
-        }
+        // Remove existing model children (keep lcdGroup)
+        masterPivot.children = masterPivot.children.filter((c) => c === lcdGroup);
         masterPivot.add(modelsCacheRef.current[key]);
         setIsLoaded(true);
         return;
@@ -136,19 +280,16 @@ export function Scroll3DCamera() {
         (gltf) => {
           const raw = gltf.scene;
 
-          // Compute bounding box and center pivot
           const box = new THREE.Box3().setFromObject(raw);
           const center = box.getCenter(new THREE.Vector3());
           const size = box.getSize(new THREE.Vector3());
 
           raw.position.sub(center);
 
-          // Normalize scale so it fits perfectly
           const maxDim = Math.max(size.x, size.y, size.z);
           const baseScale = targetSize / maxDim;
           raw.scale.setScalar(baseScale);
 
-          // Enhance materials for photorealism
           raw.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
               const mesh = child as THREE.Mesh;
@@ -167,10 +308,7 @@ export function Scroll3DCamera() {
           wrapper.add(raw);
           modelsCacheRef.current[key] = wrapper;
 
-          // Add to pivot
-          while (masterPivot.children.length > 0) {
-            masterPivot.remove(masterPivot.children[0]);
-          }
+          masterPivot.children = masterPivot.children.filter((c) => c === lcdGroup);
           masterPivot.add(wrapper);
           setIsLoaded(true);
         },
@@ -181,20 +319,25 @@ export function Scroll3DCamera() {
       );
     };
 
-    // Load active model
     const modelUrl =
       activeModel === "steampunk"
         ? "/assets/models/steampunk_camera.glb"
         : "/assets/models/antique_camera.glb";
     loadModel(modelUrl, activeModel, activeModel === "steampunk" ? 2.3 : 2.5);
 
-    // ── Scroll & Mouse Tracking ───────────────────────────────────────
+    // ── Track Scroll with Precision across Hero & Reel Experience ─────
     const onScroll = () => {
+      const heroSection = document.querySelector<HTMLElement>("[data-hero-experience]");
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect();
+        const total = heroSection.offsetHeight - window.innerHeight;
+        const p = Math.max(0, Math.min(1, -rect.top / (total || 1)));
+        stateRef.current.targetHeroP = p;
+      }
+
       const scrollY = window.scrollY;
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const p = Math.min(1, Math.max(0, scrollY / maxScroll));
-      stateRef.current.targetProgress = p;
-      setScrollPercent(Math.round(p * 100));
+      stateRef.current.globalScrollP = Math.min(1, Math.max(0, scrollY / maxScroll));
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -231,62 +374,7 @@ export function Scroll3DCamera() {
 
     onScroll();
 
-    // ── 3D Waypoints (Tasteful, Non-Blocking, Refined in Margins) ────
-    // Camera is positioned in margins / negative space, NEVER covering headings or photo grids!
-    const waypoints: Waypoint[] = [
-      // 0.00: Hero — Floating proudly in upper-right margin, tilted 3/4
-      { p: 0.0, pos: [3.3, -0.1, 0.2], rot: [-0.05, -0.6, 0.05], scale: 0.64 },
-
-      // 0.18: Curved Reel — Right margin, clean of reel cards
-      { p: 0.18, pos: [3.2, -0.3, 0.0], rot: [0.1, -0.75, 0.05], scale: 0.62 },
-
-      // 0.35: Harmonics Radar Dial — Docks gracefully to the right of the dial
-      { p: 0.35, pos: [3.4, 0.0, -0.2], rot: [0.2, -0.85, 0.1], scale: 0.68 },
-
-      // 0.52: Services Scroller — Right margin beside service groups
-      { p: 0.52, pos: [3.3, 0.15, -0.2], rot: [-0.1, -0.5, 0.05], scale: 0.66 },
-
-      // 0.72: Selected Work Gallery — Docks in bottom-right corner, 100% clear of all 36 photo cards
-      { p: 0.72, pos: [3.3, -1.75, 0.4], rot: [0.1, -0.4, 0.02], scale: 0.46 },
-
-      // 0.88: Medium-Format Optics / Stats — Right side framing
-      { p: 0.88, pos: [3.4, -0.2, 0.1], rot: [0.08, -0.5, 0.08], scale: 0.68 },
-
-      // 1.00: CTA Band — Centered below the main CTA headline in hero pose
-      { p: 1.0, pos: [0.0, -0.65, 0.6], rot: [0.05, 0.0, 0.0], scale: 0.82 },
-    ];
-
-    const interpolateTrajectory = (p: number) => {
-      let idx = 0;
-      for (let i = 0; i < waypoints.length - 1; i++) {
-        if (p >= waypoints[i].p && p <= waypoints[i + 1].p) {
-          idx = i;
-          break;
-        }
-      }
-
-      const w1 = waypoints[idx];
-      const w2 = waypoints[idx + 1] || w1;
-      const span = Math.max(0.001, w2.p - w1.p);
-      const factor = (p - w1.p) / span;
-
-      // Cosine ease
-      const eased = (1 - Math.cos(factor * Math.PI)) / 2;
-
-      const posX = THREE.MathUtils.lerp(w1.pos[0], w2.pos[0], eased);
-      const posY = THREE.MathUtils.lerp(w1.pos[1], w2.pos[1], eased);
-      const posZ = THREE.MathUtils.lerp(w1.pos[2], w2.pos[2], eased);
-
-      const rotX = THREE.MathUtils.lerp(w1.rot[0], w2.rot[0], eased);
-      const rotY = THREE.MathUtils.lerp(w1.rot[1], w2.rot[1], eased);
-      const rotZ = THREE.MathUtils.lerp(w1.rot[2], w2.rot[2], eased);
-
-      const scale = THREE.MathUtils.lerp(w1.scale, w2.scale, eased);
-
-      return { posX, posY, posZ, rotX, rotY, rotZ, scale };
-    };
-
-    // ── 60fps Physics & Render Loop ───────────────────────────────────
+    // ── 60fps Physics, Animation & Camera Choreography ────────────────
     let animId: number;
     let clock = 0;
 
@@ -294,45 +382,94 @@ export function Scroll3DCamera() {
       clock += 0.015;
       const s = stateRef.current;
 
-      // Smooth scroll progress lerp
-      s.scrollProgress += (s.targetProgress - s.scrollProgress) * 0.075;
-
-      // Smooth mouse parallax lerp
+      // Smooth lerp
+      s.heroP += (s.targetHeroP - s.heroP) * 0.085;
       s.mouseX += (s.targetMouseX - s.mouseX) * 0.05;
       s.mouseY += (s.targetMouseY - s.mouseY) * 0.05;
 
-      const cur = interpolateTrajectory(s.scrollProgress);
+      const p = s.heroP;
 
       // Subtle breathing motion
-      const breathY = Math.sin(clock * 1.4) * 0.04;
-      const breathRot = Math.cos(clock * 1.1) * 0.015;
+      const breathY = Math.sin(clock * 1.4) * 0.03;
+      const breathRot = Math.cos(clock * 1.1) * 0.012;
+
+      // Trigger photo flash burst around p = 0.07 -> 0.09
+      if (p >= 0.07 && p <= 0.12 && !s.hasFlashed) {
+        s.hasFlashed = true;
+        setFlashTrigger(true);
+        setTimeout(() => setFlashTrigger(false), 240);
+      } else if (p < 0.04) {
+        s.hasFlashed = false;
+      }
 
       if (!isInteractive) {
-        if (isDocked) {
-          // Docked in bottom-right corner as a mini companion
-          masterPivot.position.set(3.2, -1.8, 0.5);
-          masterPivot.rotation.set(0.1, clock * 0.4, 0);
-          masterPivot.scale.setScalar(0.42);
+        if (p <= 0.08) {
+          // Phase A: Aiming at scene below the main headline, locking focus
+          setHudPhase("aim");
+          lcdGroup.visible = false; // Never show LCD from the front in hero!
+          masterPivot.position.set(0.0 + s.mouseX * 0.12, -1.38 - s.mouseY * 0.1 + breathY, 1.05);
+          masterPivot.rotation.set(0.02 - s.mouseY * 0.05 + breathRot, -0.12 + s.mouseX * 0.08, 0);
+          masterPivot.scale.setScalar(0.65);
+          mount.style.opacity = "1";
+          mount.style.pointerEvents = "none";
+        } else if (p > 0.08 && p <= 0.22) {
+          // Phase B: Flip 180° on Y & elevate to center — Ooltah Ghumna! Display reveals photo!
+          setHudPhase("flip");
+          const factor = (p - 0.08) / 0.14;
+          const eased = (1 - Math.cos(factor * Math.PI)) / 2;
+
+          // Reveal LCD once rotating towards viewer
+          lcdGroup.visible = factor > 0.15;
+
+          const rotY = -0.12 + eased * (Math.PI + 0.12); // -0.12 to 180° (Math.PI)
+          const posY = -1.38 + eased * 1.38; // Elevates from -1.38 to 0.0 center
+          const posZ = 1.05 + eased * 1.15; // 1.05 to 2.2
+          const scale = 0.65 + eased * 0.52; // 0.65 to 1.17
+
+          masterPivot.position.set(0.0 + s.mouseX * 0.15, posY - s.mouseY * 0.1 + breathY, posZ);
+          masterPivot.rotation.set(0.02 - s.mouseY * 0.05, rotY + s.mouseX * 0.08, 0);
+          masterPivot.scale.setScalar(scale);
+          mount.style.opacity = "1";
+          mount.style.pointerEvents = "none";
+        } else if (p > 0.22 && p <= 0.36) {
+          // Phase C: Zoom into the LCD monitor until it fills the whole screen!
+          setHudPhase("zoom");
+          lcdGroup.visible = true;
+          const factor = (p - 0.22) / 0.14;
+          const eased = factor * factor; // Quadratic acceleration into screen
+
+          // posZ moves from 2.2 all the way to 7.8 (right in front of lens)
+          const posZ = 2.2 + eased * 5.6;
+          const scale = 1.17 + eased * 2.8;
+
+          masterPivot.position.set(0.0, 0.0, posZ);
+          masterPivot.rotation.set(0.0, Math.PI, 0);
+          masterPivot.scale.setScalar(scale);
+
+          // Crossfade into 2D fullscreen viewfinder at the climax
+          if (p >= 0.32) {
+            const fade = Math.max(0, 1 - (p - 0.32) / 0.04);
+            mount.style.opacity = String(fade);
+          } else {
+            mount.style.opacity = "1";
+          }
+          mount.style.pointerEvents = "none";
         } else {
-          masterPivot.position.set(
-            cur.posX + s.mouseX * 0.25,
-            cur.posY - s.mouseY * 0.2 + breathY,
-            cur.posZ,
-          );
-
-          masterPivot.rotation.set(
-            cur.rotX - s.mouseY * 0.12 + breathRot,
-            cur.rotY + s.mouseX * 0.2,
-            cur.rotZ,
-          );
-
-          masterPivot.scale.setScalar(cur.scale);
+          // Phase D & Beyond: Inside the Viewfinder & Rest of the Website!
+          // Camera has completed its cinematic prologue; stays 100% hidden and unblocking!
+          setHudPhase("inside");
+          lcdGroup.visible = false;
+          mount.style.opacity = "0";
+          mount.style.pointerEvents = "none";
         }
       } else {
-        // Interactive Orbit Mode
+        // Interactive Orbit Mode (activated via DRAG 3D button)
+        lcdGroup.visible = true;
         masterPivot.rotation.set(s.orbitX, s.orbitY, 0);
-        masterPivot.position.set(0, breathY, 0.3);
-        masterPivot.scale.setScalar(1.0);
+        masterPivot.position.set(0, breathY, 0.4);
+        masterPivot.scale.setScalar(0.95);
+        mount.style.opacity = "1";
+        mount.style.pointerEvents = "auto";
       }
 
       renderer.render(scene, camera);
@@ -341,7 +478,6 @@ export function Scroll3DCamera() {
 
     animId = requestAnimationFrame(tick);
 
-    // ── Resize Observer ───────────────────────────────────────────────
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
@@ -362,6 +498,7 @@ export function Scroll3DCamera() {
       renderer.dispose();
       pmremGenerator.dispose();
       dracoLoader.dispose();
+      lcdTexture.dispose();
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
@@ -379,34 +516,53 @@ export function Scroll3DCamera() {
       <div
         ref={mountRef}
         aria-hidden
-        className={`fixed inset-0 z-[35] overflow-hidden transition-opacity duration-700 ${
+        className={`fixed inset-0 z-[35] overflow-hidden pointer-events-none transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         } ${
           isInteractive
-            ? "pointer-events-auto cursor-grab active:cursor-grabbing bg-black/20 backdrop-blur-[2px]"
-            : "pointer-events-none"
+            ? "!pointer-events-auto cursor-grab active:cursor-grabbing bg-black/20 backdrop-blur-[2px]"
+            : ""
         }`}
       />
 
-      {/* ── Camera Flash Burst FX ───────────────────────────────────── */}
+      {/* ── Camera Flash Burst FX (Fires on Shutter Snap) ───────────── */}
       {flashTrigger && (
         <div className="fixed inset-0 z-[9999] pointer-events-none bg-white animate-out fade-out duration-300" />
       )}
 
       {/* ── Floating 3D Camera Telemetry & Controller HUD ───────────── */}
-      <div className="fixed bottom-6 left-6 z-[80] hidden sm:flex items-center gap-2 select-none">
+      <div
+        className={`fixed bottom-6 left-6 z-[80] hidden sm:flex items-center gap-2 select-none transition-all duration-500 ${
+          hudPhase === "inside" && !isInteractive
+            ? "opacity-0 pointer-events-none translate-y-4"
+            : "opacity-100 translate-y-0"
+        }`}
+      >
         <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-black/85 border border-gold/30 text-gold shadow-2xl backdrop-blur-md font-mono text-[10px] tracking-widest">
-          {/* Status LED & Label */}
+          {/* Status LED & Phase Label */}
           <span className="flex items-center gap-1.5 font-semibold">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+            <span
+              className={`size-1.5 rounded-full animate-pulse shadow-[0_0_8px_#34d399] ${
+                hudPhase === "aim"
+                  ? "bg-amber-400"
+                  : hudPhase === "flip" || hudPhase === "zoom"
+                    ? "bg-red-500"
+                    : "bg-emerald-400"
+              }`}
+            />
             <Camera className="size-3.5 text-gold" />
-            <span>3D CAM</span>
+            <span className="uppercase">
+              {hudPhase === "aim"
+                ? "3D CAM: AIM"
+                : hudPhase === "flip"
+                  ? "3D CAM: FLIP"
+                  : hudPhase === "zoom"
+                    ? "3D CAM: ZOOM"
+                    : hudPhase === "inside"
+                      ? "VIEWFINDER LIVE"
+                      : "3D CAM: DOCKED"}
+            </span>
           </span>
-
-          <span className="w-px h-3 bg-white/15" />
-
-          {/* Travel Percent */}
-          <span className="text-foreground/80 tabular-nums">{scrollPercent}% TRAVEL</span>
 
           <span className="w-px h-3 bg-white/15" />
 
