@@ -50,9 +50,14 @@ export function Anime3DToolbox() {
     camera.position.set(0, 0.2, 16);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+      precision: "mediump",
+    });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.3;
     mount.appendChild(renderer.domElement);
@@ -316,11 +321,24 @@ export function Anime3DToolbox() {
     };
     updatePositions(animStateRef.current.progress);
 
-    // ── 60fps Animation Loop ──────────────────────────────────────────
+    // ── Intersection Observer: Only render WebGL when visible on screen ───
+    let isVisible = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+      },
+      { rootMargin: "120px" }
+    );
+    io.observe(mount);
+
+    // ── 60fps Animation Loop (Zero GPU usage when offscreen) ────────────
     let animId: number;
     let clock = 0;
 
     const tick = () => {
+      animId = requestAnimationFrame(tick);
+      if (!isVisible) return;
+
       clock += 0.015;
       const s = animStateRef.current;
 
@@ -334,9 +352,7 @@ export function Anime3DToolbox() {
       }
 
       updatePositions(s.progress);
-
       renderer.render(scene, camera);
-      animId = requestAnimationFrame(tick);
     };
 
     animId = requestAnimationFrame(tick);
@@ -358,7 +374,19 @@ export function Anime3DToolbox() {
 
     return () => {
       cancelAnimationFrame(animId);
+      io.disconnect();
       ro.disconnect();
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const m = child as THREE.Mesh;
+          m.geometry?.dispose();
+          if (Array.isArray(m.material)) {
+            m.material.forEach((mat) => mat.dispose());
+          } else if (m.material) {
+            m.material.dispose();
+          }
+        }
+      });
       renderer.dispose();
       pmremGenerator.dispose();
       if (mount.contains(renderer.domElement)) {

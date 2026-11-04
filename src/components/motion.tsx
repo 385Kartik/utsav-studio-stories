@@ -520,7 +520,7 @@ export function CurvedReelScrollExperience({
       precision: "mediump",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
     renderer.shadowMap.enabled = false;
@@ -602,8 +602,6 @@ export function CurvedReelScrollExperience({
         raw.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const m = child as THREE.Mesh;
-            m.castShadow = true;
-            m.receiveShadow = true;
             if (m.material) {
               const mat = m.material as THREE.MeshStandardMaterial;
               mat.envMapIntensity = 1.7;
@@ -1079,6 +1077,17 @@ export function CurvedReelScrollExperience({
       ctx.revert();
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", onResize);
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const m = child as THREE.Mesh;
+          m.geometry?.dispose();
+          if (Array.isArray(m.material)) {
+            m.material.forEach((mat) => mat.dispose());
+          } else if (m.material) {
+            m.material.dispose();
+          }
+        }
+      });
       renderer.dispose();
       pmremGenerator.dispose();
       dracoLoader.dispose();
