@@ -4,6 +4,10 @@ import Lenis from "lenis";
 import { animate, stagger, scrambleText, createTimeline } from "animejs";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { Eyebrow, OutlineButton } from "@/components/buttons";
 import { Crazy3DCard } from "@/components/Crazy3DCard";
 import {
@@ -458,30 +462,32 @@ export function CurvedReelScrollExperience({
   heroImage?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const threeMountRef = useRef<HTMLDivElement>(null);
   const heroWrapperRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLImageElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
+  const cameraScreenRef = useRef<HTMLDivElement>(null);
+  const capturedPhotoRef = useRef<HTMLDivElement>(null);
   const statementRef = useRef<HTMLDivElement>(null);
   const serpentineStageRef = useRef<HTMLDivElement>(null);
   const serpentineTrackRef = useRef<HTMLDivElement>(null);
   const cylinderStageRef = useRef<HTMLDivElement>(null);
   const cylinderWrapperRef = useRef<HTMLDivElement>(null);
-  const viewfinderRef = useRef<HTMLDivElement>(null);
+  const hudModeRef = useRef<HTMLSpanElement>(null);
+  const flashRef = useRef<HTMLDivElement>(null);
+  const aimReticleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     ensureGsap();
-    if (!containerRef.current) return;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      if (statementRef.current) statementRef.current.style.opacity = "1";
-      if (cylinderStageRef.current) cylinderStageRef.current.style.opacity = "1";
-      return;
-    }
+    if (typeof window === "undefined" || !containerRef.current) return;
 
     const container = containerRef.current;
+    const threeMount = threeMountRef.current;
     const heroWrap = heroWrapperRef.current;
     const heroImg = heroImgRef.current;
     const heroText = heroTextRef.current;
+    const cameraScreen = cameraScreenRef.current;
+    const capturedPhoto = capturedPhotoRef.current;
     const stmt = statementRef.current;
     const serpStage = serpentineStageRef.current;
     const serpCards = serpentineTrackRef.current
@@ -490,55 +496,233 @@ export function CurvedReelScrollExperience({
     const cylStage = cylinderStageRef.current;
     const cylWrapper = cylinderWrapperRef.current;
     const cylCards = cylWrapper ? (Array.from(cylWrapper.children) as HTMLElement[]) : [];
-    const viewfinder = viewfinderRef.current;
+    const flashEl = flashRef.current;
+    const aimReticle = aimReticleRef.current;
 
     const ribbonCount = serpCards.length;
     const cylinderCount = cylCards.length;
 
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let isMobile = width < 768;
+
+    // ── Three.js Scene Setup ──────────────────────────────────────────
+    const scene = new THREE.Scene();
+
+    const threeCamera = new THREE.PerspectiveCamera(36, width / height, 0.01, 100);
+    threeCamera.position.set(0, 0, 8.5);
+    threeCamera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+
+    if (threeMount) {
+      threeMount.replaceChildren(renderer.domElement);
+    }
+
+    // ── Studio PBR Lighting & Environment ─────────────────────────────
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = envTexture;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.25);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff5e6, 3.5);
+    keyLight.position.set(7, 9, 8);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x7ac4ff, 2.2);
+    rimLight.position.set(-8, -4, -6);
+    scene.add(rimLight);
+
+    const goldFill = new THREE.DirectionalLight(0xd4a359, 2.4);
+    goldFill.position.set(-5, 6, 4);
+    scene.add(goldFill);
+
+    // ── Master Camera Pivot ───────────────────────────────────────────
+    const masterPivot = new THREE.Group();
+    scene.add(masterPivot);
+
+    // Screen Dimensions in 3D Model Units
+    const screenW = 1.35;
+    const screenH = 0.88;
+
+    const lcdGroup = new THREE.Group();
+    lcdGroup.position.set(0.0, -0.05, -1.04);
+    lcdGroup.rotation.y = Math.PI;
+    masterPivot.add(lcdGroup);
+
+    // Titanium Screen Bezel
+    const bezelGeom = new THREE.BoxGeometry(screenW + 0.10, screenH + 0.10, 0.035);
+    const bezelMat = new THREE.MeshStandardMaterial({
+      color: 0x141416,
+      metalness: 0.90,
+      roughness: 0.24,
+    });
+    const bezelMesh = new THREE.Mesh(bezelGeom, bezelMat);
+    bezelMesh.position.z = -0.015;
+    lcdGroup.add(bezelMesh);
+
+    // Deep Black Screen Mesh (Physical backing for DOM display)
+    const screenGeom = new THREE.PlaneGeometry(screenW, screenH);
+    const screenMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
+    const screenMesh = new THREE.Mesh(screenGeom, screenMat);
+    screenMesh.position.z = 0.018;
+    lcdGroup.add(screenMesh);
+
+    // ── GLTF & Draco Loader ───────────────────────────────────────────
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("/draco/gltf/");
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    gltfLoader.load(
+      "/assets/models/steampunk_camera.glb",
+      (gltf) => {
+        const raw = gltf.scene;
+        const box = new THREE.Box3().setFromObject(raw);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        raw.position.sub(center);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        raw.scale.setScalar(2.3 / maxDim);
+
+        raw.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const m = child as THREE.Mesh;
+            m.castShadow = true;
+            m.receiveShadow = true;
+            if (m.material) {
+              const mat = m.material as THREE.MeshStandardMaterial;
+              mat.envMapIntensity = 1.7;
+              mat.needsUpdate = true;
+            }
+          }
+        });
+
+        masterPivot.add(raw);
+      },
+      undefined,
+      (err) => {
+        console.warn("[CurvedReelScrollExperience] Failed to load steampunk_camera.glb:", err);
+      }
+    );
+
+    // ── Screen Projection Math ────────────────────────────────────────
+    const getScreenPixelBounds = () => {
+      screenMesh.updateWorldMatrix(true, false);
+      const m = screenMesh.matrixWorld;
+      const hw = screenW / 2;
+      const hh = screenH / 2;
+
+      const corners = [
+        new THREE.Vector3(-hw, -hh, 0.01).applyMatrix4(m).project(threeCamera),
+        new THREE.Vector3(hw, -hh, 0.01).applyMatrix4(m).project(threeCamera),
+        new THREE.Vector3(hw, hh, 0.01).applyMatrix4(m).project(threeCamera),
+        new THREE.Vector3(-hw, hh, 0.01).applyMatrix4(m).project(threeCamera),
+      ];
+
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const c of corners) {
+        const px = ((c.x + 1) / 2) * width;
+        const py = ((-c.y + 1) / 2) * height;
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        if (py < minY) minY = py;
+        if (py > maxY) maxY = py;
+      }
+
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      const w = Math.max(0, maxX - minX);
+      const h = Math.max(0, maxY - minY);
+      return { cx, cy, w, h };
+    };
+
+    // Dynamic screen dimensions tracked in real time
+    let curScreenW = 600;
+    let curScreenH = 400;
+
+    const getSerpentinePoint = (t: number) => {
+      const mWidth = curScreenW;
+      const mHeight = curScreenH;
+
+      const x = -mWidth * 0.14 + t * (mWidth * 1.28);
+      const amplitudeY = isMobile ? mHeight * 0.14 : mHeight * 0.18;
+      const cardHalfH = isMobile ? 80 : 100;
+      const baseY = mHeight * 0.50 - cardHalfH;
+      const y =
+        baseY -
+        Math.sin(t * Math.PI * 1.8) * amplitudeY +
+        Math.cos(t * Math.PI * 2.2) * (isMobile ? 10 : 16);
+      const z = Math.sin(t * Math.PI) * (isMobile ? 60 : 120) - 20;
+      const angle = Math.cos(t * Math.PI * 1.8) * -14;
+      const tilt = Math.sin(t * Math.PI * 2) * 8;
+      return { x, y, z, angle, tilt };
+    };
+
+    // ── Mouse & Breathing Physics ─────────────────────────────────────
+    const mouseState = {
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+    };
+
+    let hasFlashed = false;
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouseState.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseState.targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+
+    // ── GSAP Scroll Trigger Timeline ──────────────────────────────────
     const ctx = gsap.context(() => {
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      let isMobile = width < 768;
-
-      const updateDimensions = () => {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        isMobile = width < 768;
-      };
-
-      const getSerpentinePoint = (t: number) => {
-        const x = -width * 0.18 + t * (width * 1.36);
-        const amplitudeY = isMobile ? height * 0.14 : height * 0.20;
-        const baseY = isMobile ? height * 0.60 : height * 0.62;
-        const y =
-          baseY -
-          Math.sin(t * Math.PI * 1.8) * amplitudeY +
-          Math.cos(t * Math.PI * 2.2) * (isMobile ? 18 : 32);
-        const z = Math.sin(t * Math.PI) * (isMobile ? 80 : 160) - 20;
-        const angle = Math.cos(t * Math.PI * 1.8) * -20;
-        const tilt = Math.sin(t * Math.PI * 2) * 12;
-        return { x, y, z, angle, tilt };
-      };
-
       const motionState = { progress: 0 };
 
       const applyFrame = (p: number) => {
-        // ==========================================================
-        // Phase 1: Hero 3D Page-Fold & Squeeze (0.00 -> 0.16)
-        // ==========================================================
+        // 1. Live HUD Telemetry Tag
+        if (hudModeRef.current) {
+          if (p < 0.32) {
+            hudModeRef.current.textContent = "[LAST SHOT · CAPTURE REVIEW]";
+          } else if (p >= 0.32 && p < 0.50) {
+            hudModeRef.current.textContent = "[STUDIO STATEMENT · REC.709]";
+          } else if (p >= 0.50 && p < 0.72) {
+            hudModeRef.current.textContent = "[SERPENTINE REEL · 14 FRAMES]";
+          } else {
+            hudModeRef.current.textContent = "[STORIES CYLINDER · 18 FRAMES]";
+          }
+        }
+
+        // 2. Hero 3D Typography Page-Fold & Squeeze (0.00 -> 0.16)
         if (heroWrap) {
           if (p <= 0.16) {
             const norm = p / 0.16;
-            const squeezeX = 1 - norm * 0.32; // Horizontal squeeze
-            const squeezeY = 1 + norm * 0.10; // Vertical stretch
-            const rotateX = norm * 45; // 3D page fold forward
+            const squeezeX = 1 - norm * 0.30;
+            const squeezeY = 1 + norm * 0.10;
+            const rotateX = norm * 42;
             const driftY = norm * -90;
-            const opacity = Math.max(0, 1 - norm * 1.3);
+            const opacity = Math.max(0, 1 - norm * 1.35);
             const blur = norm * 6;
 
             heroWrap.style.transform = `perspective(1200px) translate3d(0, ${driftY}px, ${-norm * 200}px) rotateX(${rotateX}deg) scale(${squeezeX}, ${squeezeY})`;
             heroWrap.style.opacity = String(opacity);
             heroWrap.style.filter = `blur(${blur}px)`;
+            heroWrap.style.pointerEvents = opacity > 0.1 ? "auto" : "none";
 
             if (heroImg) {
               heroImg.style.transform = `scale(${1.05 + norm * 0.25}) translateY(${norm * 40}px)`;
@@ -548,57 +732,145 @@ export function CurvedReelScrollExperience({
             }
           } else {
             heroWrap.style.opacity = "0";
+            heroWrap.style.pointerEvents = "none";
           }
         }
 
-        // ==========================================================
-        // Viewfinder Display Frame Overlay (Active inside camera screen)
-        // ==========================================================
-        if (viewfinder) {
-          if (p >= 0.26 && p <= 0.95) {
-            let vfAlpha = 1;
-            if (p < 0.30) vfAlpha = (p - 0.26) / 0.04;
-            else if (p > 0.88) vfAlpha = 1 - (p - 0.88) / 0.07;
-            viewfinder.style.opacity = String(Math.max(0, Math.min(1, vfAlpha)));
+        // 3. Shutter Flash Burst (around p = 0.038 -> 0.075)
+        if (p >= 0.038 && p <= 0.075 && !hasFlashed) {
+          hasFlashed = true;
+          if (flashEl) {
+            flashEl.style.opacity = "0.95";
+            setTimeout(() => {
+              if (flashEl) flashEl.style.opacity = "0";
+            }, 180);
+          }
+        } else if (p < 0.02) {
+          hasFlashed = false;
+        }
+
+        // 4. Hero Aim Reticle (visible only when aiming forward)
+        if (aimReticle) {
+          if (p <= 0.05) {
+            aimReticle.style.opacity = String(Math.max(0, 1 - p / 0.05));
           } else {
-            viewfinder.style.opacity = "0";
+            aimReticle.style.opacity = "0";
           }
         }
 
-        // ==========================================================
-        // Phase 2: "Three Decades" Editorial Statement (0.28 -> 0.44)
-        // ==========================================================
+        // 5. 3D Camera Movement & 180° Flip:
+        //    "camara ko pass laate reh and camara ki screen pe hi sab chalna chahiye"
+        const maxZ = isMobile ? 4.9 : Math.min(5.75, 5.2 + (width / 1440) * 0.55);
+
+        let basePosY = 0;
+        let basePosZ = 1.05;
+        let baseRotY = 0;
+        let baseRotX = 0;
+        let baseScale = 0.68;
+        let screenOpacity = 0;
+
+        if (p <= 0.06) {
+          // Hero state: Camera below headline aiming at scene
+          basePosY = -1.35;
+          basePosZ = 1.05;
+          baseRotY = -0.08;
+          baseRotX = 0.02;
+          baseScale = 0.68;
+          screenOpacity = 0;
+        } else if (p > 0.06 && p <= 0.18) {
+          // 180° flip & rise to center
+          const norm = (p - 0.06) / 0.12;
+          const eased = (1 - Math.cos(norm * Math.PI)) / 2;
+
+          basePosY = -1.35 + eased * 1.30; // -1.35 -> -0.05
+          basePosZ = 1.05 + eased * 1.05; // 1.05 -> 2.10
+          baseRotY = -0.08 + eased * (Math.PI + 0.08); // -> PI
+          baseRotX = 0.02 * (1 - eased);
+          baseScale = 0.68 + eased * 0.27; // 0.68 -> 0.95
+
+          // Back screen powers on when rotated sufficiently
+          if (norm > 0.40) {
+            screenOpacity = Math.min(1, (norm - 0.40) / 0.50);
+          }
+        } else {
+          // "CAMARA KO PASS LAATE REH":
+          // The camera stays facing the viewer (PI) and zooms forward closer and closer!
+          const zoomNorm = Math.min(1, Math.max(0, (p - 0.18) / 0.74));
+          const zoomEased = zoomNorm; // steady cinematic forward dolly
+
+          basePosY = -0.05;
+          basePosZ = 2.10 + zoomEased * (maxZ - 2.10);
+          baseRotY = Math.PI;
+          baseRotX = 0;
+          baseScale = 0.95 + zoomEased * 0.32;
+          screenOpacity = 1;
+        }
+
+        // Apply to masterPivot
+        masterPivot.position.set(
+          mouseState.x * 0.08,
+          basePosY - mouseState.y * 0.06,
+          basePosZ
+        );
+        masterPivot.rotation.set(
+          baseRotX - mouseState.y * 0.035,
+          baseRotY + mouseState.x * 0.04,
+          0
+        );
+        masterPivot.scale.setScalar(baseScale);
+
+        // 6. Camera Screen DOM Container Opacity
+        if (cameraScreen) {
+          cameraScreen.style.opacity = String(screenOpacity);
+          cameraScreen.style.pointerEvents = screenOpacity > 0.5 ? "auto" : "none";
+        }
+
+        // 7. Layer A: Captured Wedding Photo Review (0.08 -> 0.34)
+        if (capturedPhoto) {
+          if (p >= 0.08 && p <= 0.34) {
+            let photoOpacity = 1;
+            const photoScale = 1.0 + (p - 0.08) * 0.18;
+            if (p < 0.13) photoOpacity = (p - 0.08) / 0.05;
+            else if (p > 0.28) photoOpacity = 1 - (p - 0.28) / 0.06;
+
+            capturedPhoto.style.opacity = String(Math.max(0, Math.min(1, photoOpacity)));
+            capturedPhoto.style.transform = `scale(${photoScale})`;
+          } else {
+            capturedPhoto.style.opacity = "0";
+          }
+        }
+
+        // 8. Layer B: Studio Editorial Statement (0.30 -> 0.52)
         if (stmt) {
-          if (p >= 0.28 && p <= 0.44) {
+          if (p >= 0.30 && p <= 0.52) {
             let stmtOpacity = 1;
-            if (p < 0.34) stmtOpacity = (p - 0.28) / 0.06;
-            else if (p > 0.38) stmtOpacity = 1 - (p - 0.38) / 0.06;
+            if (p < 0.35) stmtOpacity = (p - 0.30) / 0.05;
+            else if (p > 0.46) stmtOpacity = 1 - (p - 0.46) / 0.06;
+
             stmt.style.opacity = String(Math.max(0, stmtOpacity));
-            stmt.style.transform = `translate3d(0, ${(0.34 - p) * 35}px, 0)`;
+            stmt.style.transform = `translate3d(0, ${(0.36 - p) * 32}px, 0)`;
           } else {
             stmt.style.opacity = "0";
           }
         }
 
-        // ==========================================================
-        // Phase 3: Serpentine Curved Ribbon (Photos start displaying here!) (0.30 -> 0.60)
-        // ==========================================================
+        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.48 -> 0.74)
         if (serpStage) {
-          if (p >= 0.30 && p <= 0.60) {
+          if (p >= 0.48 && p <= 0.74) {
             let ribbonOpacity = 1;
-            if (p < 0.36) ribbonOpacity = (p - 0.30) / 0.06;
-            else if (p > 0.52) ribbonOpacity = 1 - (p - 0.52) / 0.08;
+            if (p < 0.53) ribbonOpacity = (p - 0.48) / 0.05;
+            else if (p > 0.69) ribbonOpacity = 1 - (p - 0.69) / 0.05;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.30) / 0.26;
+            const ribbonProgress = (p - 0.48) / 0.22;
             serpCards.forEach((card, idx) => {
               const offset = idx / ribbonCount;
-              const cardT = ribbonProgress * 1.5 - offset * 0.7;
+              const cardT = ribbonProgress * 1.9 - offset * 1.0;
               const clampedT = Math.max(0, Math.min(1.08, cardT));
 
               const pt = getSerpentinePoint(clampedT);
-              const scale = 0.82 + Math.sin(clampedT * Math.PI) * 0.22;
-              const cardOpacity = clampedT <= 0 || clampedT >= 1.05 ? 0 : 1;
+              const scale = (isMobile ? 0.75 : 0.88) + Math.sin(clampedT * Math.PI) * 0.18;
+              const cardOpacity = clampedT <= 0.01 || clampedT >= 1.05 ? 0 : 1;
 
               card.style.transform = `translate3d(${pt.x}px, ${pt.y}px, ${pt.z}px) rotateZ(${pt.angle}deg) rotateX(${pt.tilt}deg) scale(${scale})`;
               card.style.opacity = String(cardOpacity);
@@ -609,19 +881,17 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // ==========================================================
-        // Phase 4: Wide 3D Panoramic Cylinder Reel (Inside Viewfinder) (0.50 -> 0.96)
-        // ==========================================================
+        // 10. Layer D: 3D Cylindrical Story Reel (0.70 -> 0.98)
         if (cylStage && cylWrapper) {
-          if (p >= 0.50 && p <= 0.98) {
+          if (p >= 0.70 && p <= 0.98) {
             let reelOpacity = 1;
-            if (p < 0.58) reelOpacity = (p - 0.50) / 0.08;
-            else if (p > 0.90) reelOpacity = 1 - (p - 0.90) / 0.08;
+            if (p < 0.75) reelOpacity = (p - 0.70) / 0.05;
+            else if (p > 0.94) reelOpacity = 1 - (p - 0.94) / 0.04;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
-            const radius = isMobile ? 260 : Math.min(width * 0.46, 560);
-            const reelNorm = (p - 0.50) / 0.42;
-            const currentRot = reelNorm * 540;
+            const radius = isMobile ? 170 : Math.min(curScreenW * 0.36, 360);
+            const reelNorm = (p - 0.72) / 0.22;
+            const currentRot = reelNorm * 480;
 
             cylCards.forEach((card, idx) => {
               const baseAngle = (idx / cylinderCount) * 360;
@@ -635,7 +905,7 @@ export function CurvedReelScrollExperience({
               card.style.opacity = String(depthAlpha);
             });
 
-            cylWrapper.style.transform = `rotateX(${isMobile ? 6 : 9}deg) rotateZ(-2deg)`;
+            cylWrapper.style.transform = `rotateX(${isMobile ? 5 : 8}deg) rotateZ(-1deg)`;
           } else {
             cylStage.style.opacity = "0";
           }
@@ -650,7 +920,12 @@ export function CurvedReelScrollExperience({
           scrub: 1,
           invalidateOnRefresh: true,
           onRefresh: () => {
-            updateDimensions();
+            width = window.innerWidth;
+            height = window.innerHeight;
+            isMobile = width < 768;
+            threeCamera.aspect = width / height;
+            threeCamera.updateProjectionMatrix();
+            renderer.setSize(width, height);
             applyFrame(motionState.progress);
           },
         },
@@ -665,10 +940,10 @@ export function CurvedReelScrollExperience({
         },
       });
 
-      // Initial layout pass
+      // Initial frame setup
       applyFrame(0);
 
-      // â”€â”€ Anime.js kinetic reveal: badge first â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // Kinetic typography reveals for Hero
       animate("[data-hero-badge]", {
         opacity: [0, 1],
         translateY: [10, 0],
@@ -677,9 +952,6 @@ export function CurvedReelScrollExperience({
         ease: "outExpo",
       });
 
-      // â”€â”€ Scramble text on hero title â€” the animejs.com signature effect â”€â”€â”€
-      // The hero h1 uses [data-hero-letter] spans. We scramble the whole title
-      // by targeting the wrapper span [data-hero-scramble] element.
       const heroScrambleEl = container.querySelector<HTMLElement>("[data-hero-scramble]");
       if (heroScrambleEl) {
         heroScrambleEl.style.opacity = "1";
@@ -694,18 +966,8 @@ export function CurvedReelScrollExperience({
           duration: 1400,
           ease: "linear",
         });
-      } else {
-        // Fallback: letter-by-letter kinetic stagger
-        animate("[data-hero-letter]", {
-          translateY: ["115%", "0%"],
-          opacity: [0, 1],
-          delay: stagger(55, { start: 1750 }),
-          duration: 820,
-          ease: "outExpo",
-        });
       }
 
-      // â”€â”€ Divider line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       animate("[data-hero-line]", {
         scaleX: [0, 1],
         opacity: [0, 1],
@@ -714,7 +976,6 @@ export function CurvedReelScrollExperience({
         ease: "outQuad",
       });
 
-      // â”€â”€ Sub-label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       animate("[data-hero-sub]", {
         translateY: [20, 0],
         opacity: [0, 1],
@@ -724,45 +985,55 @@ export function CurvedReelScrollExperience({
       });
     }, container);
 
-    // 2.5D interactive mouse parallax on hero image & typography
-    let animHeroImg: ReturnType<typeof animate> | null = null;
-    let animHeroText: ReturnType<typeof animate> | null = null;
+    // ── 60fps Animation Loop: Project Screen & Render ─────────────────
+    let animId: number;
 
-    const onHeroMouseMove = (e: MouseEvent) => {
-      if (window.scrollY > window.innerHeight * 0.4) return;
-      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
-      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
+    const renderLoop = () => {
+      // Smooth mouse lerp
+      mouseState.x += (mouseState.targetX - mouseState.x) * 0.05;
+      mouseState.y += (mouseState.targetY - mouseState.y) * 0.05;
 
-      if (heroImg) {
-        animHeroImg?.pause();
-        animHeroImg = animate(heroImg, {
-          translateX: normX * -28,
-          translateY: normY * -18,
-          duration: 700,
-          ease: "outCubic",
-        });
+      // Project 3D Screen to DOM Screen Bounds
+      const bounds = getScreenPixelBounds();
+      curScreenW = bounds.w;
+      curScreenH = bounds.h;
+
+      if (cameraScreen) {
+        cameraScreen.style.width = `${bounds.w}px`;
+        cameraScreen.style.height = `${bounds.h}px`;
+        cameraScreen.style.left = `${bounds.cx}px`;
+        cameraScreen.style.top = `${bounds.cy}px`;
+        cameraScreen.style.transform = `translate(-50%, -50%)`;
       }
 
-      if (heroText) {
-        animHeroText?.pause();
-        animHeroText = animate(heroText, {
-          rotateY: normX * 7,
-          rotateX: normY * -7,
-          translateX: normX * 14,
-          translateY: normY * 10,
-          duration: 600,
-          ease: "outCubic",
-        });
-      }
+      renderer.render(scene, threeCamera);
+      animId = requestAnimationFrame(renderLoop);
     };
 
-    window.addEventListener("mousemove", onHeroMouseMove, { passive: true });
+    animId = requestAnimationFrame(renderLoop);
+
+    // Resize handler
+    const onResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      isMobile = width < 768;
+      threeCamera.aspect = width / height;
+      threeCamera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    };
+    window.addEventListener("resize", onResize);
 
     return () => {
+      cancelAnimationFrame(animId);
       ctx.revert();
-      animHeroImg?.pause();
-      animHeroText?.pause();
-      window.removeEventListener("mousemove", onHeroMouseMove);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("resize", onResize);
+      renderer.dispose();
+      pmremGenerator.dispose();
+      dracoLoader.dispose();
+      if (threeMount && threeMount.contains(renderer.domElement)) {
+        threeMount.removeChild(renderer.domElement);
+      }
     };
   }, [items]);
 
@@ -771,7 +1042,7 @@ export function CurvedReelScrollExperience({
   const cylinderCards = Array.from({ length: 18 }).map((_, i) => items[i % items.length]);
 
   return (
-    <section ref={containerRef} data-hero-experience className="relative h-[260vh] md:h-[300vh] bg-background">
+    <section ref={containerRef} data-hero-experience className="relative h-[280vh] md:h-[320vh] bg-background">
       <div
         className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none"
         style={{ perspective: "1300px" }}
@@ -779,15 +1050,33 @@ export function CurvedReelScrollExperience({
         {/* Subtle cinematic backlight */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-gold/5 blur-[140px]" />
 
+        {/* Shutter Flash Burst Overlay */}
+        <div
+          ref={flashRef}
+          className="pointer-events-none absolute inset-0 z-50 bg-white opacity-0 transition-opacity duration-150"
+        />
+
+        {/* Hero Golden Aim Reticle */}
+        <div
+          ref={aimReticleRef}
+          className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 z-25 flex flex-col items-center gap-1.5 transition-opacity duration-100"
+        >
+          <div className="size-10 border border-gold/70 rounded flex items-center justify-center shadow-[0_0_12px_rgba(212,163,89,0.4)]">
+            <span className="text-gold text-xs font-mono font-bold">+</span>
+          </div>
+          <span className="text-[9px] font-mono tracking-widest text-gold/80 bg-black/70 px-1.5 py-0.5 rounded border border-gold/30 uppercase">
+            AF-AIM · FOCUS
+          </span>
+        </div>
+
         {/* ------------------------------------------------------------ */}
-        {/* STAGE 1: Hero View with 3D Page-Fold & Squeeze Animation     */}
+        {/* STAGE 1: Hero Typography View with 3D Page-Fold & Squeeze    */}
         {/* ------------------------------------------------------------ */}
         <div
           ref={heroWrapperRef}
-          className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 will-change-transform"
+          className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center p-6 will-change-transform"
           style={{ transformOrigin: "center top", transformStyle: "preserve-3d" }}
         >
-
           {heroImage && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <img
@@ -802,10 +1091,9 @@ export function CurvedReelScrollExperience({
 
           <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75 will-change-transform">
             <p data-hero-badge className="mb-4 text-[11px] uppercase tracking-[0.6em] text-gold font-mono font-medium opacity-0">
-              Mira Road East Â· Est. 1994
+              Mira Road East · Est. 1994
             </p>
             <h1 className="font-display text-[14vw] md:text-[9.5vw] font-light leading-[0.96] tracking-tight text-foreground">
-              {/* Single element for scrambleText â€” animejs rewrites innerHTML */}
               <span
                 data-hero-scramble
                 className="inline-block will-change-transform"
@@ -823,152 +1111,198 @@ export function CurvedReelScrollExperience({
         </div>
 
         {/* ------------------------------------------------------------ */}
-        {/* STAGE 2: Minimal Statement ("Three decades...")               */}
+        {/* 3D CAMERA STAGE: WebGL Canvas holding the 3D Camera Body     */}
         {/* ------------------------------------------------------------ */}
         <div
-          ref={statementRef}
-          className="pointer-events-none absolute top-12 md:top-16 inset-x-0 z-20 mx-auto max-w-3xl px-6 text-center opacity-0 transition-transform duration-75 will-change-transform"
-        >
-          <Eyebrow>About our studio</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-light leading-[1.15] tracking-tight text-foreground md:text-5xl">
-            Three decades of crafting timeless family memories.
-          </h2>
-        </div>
+          ref={threeMountRef}
+          className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+        />
 
         {/* ------------------------------------------------------------ */}
-        {/* STAGE 3: Unobstructed Serpentine Curved Ribbon (Ref 1)        */}
+        {/* 3D CAMERA SCREEN: Pinned 1:1 onto the Camera's Screen Mesh   */}
+        {/* All chapters (Photo, Statement, Ribbon, Cylinder Reel)       */}
+        {/* play directly inside the camera screen as it zooms closer!   */}
         {/* ------------------------------------------------------------ */}
         <div
-          ref={serpentineStageRef}
-          className="pointer-events-none absolute inset-0 opacity-0 overflow-hidden"
+          ref={cameraScreenRef}
+          className="absolute z-20 rounded-xl md:rounded-2xl border border-white/10 bg-[#080706] overflow-hidden select-none will-change-transform shadow-[inset_0_0_40px_rgba(0,0,0,0.85)] opacity-0"
           style={{ transformStyle: "preserve-3d" }}
         >
-          <div ref={serpentineTrackRef} className="absolute inset-0">
-            {ribbonCards.map((item, idx) => (
-              <div
-                key={`ribbon-${idx}`}
-                className="absolute left-0 top-0 w-36 md:w-56 p-2 rounded-lg bg-card/95 border border-border/80 shadow-2xl backdrop-blur-md will-change-transform pointer-events-auto"
-              >
-                <div className="flex items-center justify-between pb-1 px-1 text-[8px] font-mono tracking-widest text-muted-foreground border-b border-border/60">
-                  <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
-                  <span className="text-gold font-semibold">â€¢ 35MM</span>
-                </div>
-                <div className="w-full aspect-[4/5] mt-1.5 rounded overflow-hidden bg-muted/20 relative">
-                  <img
-                    src={item.src}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="pt-1.5 px-1 flex justify-between items-center text-[10px]">
-                  <span className="font-display text-foreground truncate">{item.title}</span>
-                  <span className="font-mono text-[9px] text-muted-foreground">{item.category}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------ */}
-        {/* STAGE 4: Wide 3D Panoramic Bundle Reel (Ref 2)                */}
-        {/* ------------------------------------------------------------ */}
-        <div
-          ref={cylinderStageRef}
-          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-0 overflow-hidden"
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {/* Section Heading */}
-          <div className="absolute top-10 md:top-14 z-20 text-center px-4">
-            <Eyebrow>Selected frames</Eyebrow>
-            <h3 className="mt-3 font-display text-3xl font-light tracking-tight text-foreground md:text-5xl">
-              Stories we've told lately
-            </h3>
-          </div>
-
-          {/* Wide 3D Cylindrical Panoramic Reel */}
+          {/* ======================================================== */}
+          {/* INSIDE CAMERA SCREEN: Captured Wedding Photo Review       */}
+          {/* ======================================================== */}
           <div
-            ref={cylinderWrapperRef}
-            className="relative w-[180px] md:w-[240px] h-[240px] md:h-[300px] mt-10 md:mt-14"
+            ref={capturedPhotoRef}
+            className="absolute inset-0 z-10 overflow-hidden pointer-events-none opacity-0 will-change-transform"
+          >
+            {heroImage && (
+              <img
+                src={heroImage}
+                alt="Captured wedding portrait"
+                className="w-full h-full object-cover filter contrast-[1.08] brightness-[0.92]"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+
+            {/* Autofocus Bracket directly locked on the happy couple */}
+            <div className="absolute left-[54%] top-[48%] -translate-x-1/2 -translate-y-1/2 size-12 md:size-16 border-2 border-gold/90 rounded-sm flex items-center justify-center shadow-[0_0_12px_rgba(212,163,89,0.4)]">
+              <span className="text-gold text-xs font-mono font-bold">+</span>
+              <span className="absolute -top-4 right-0 text-[8px] font-mono tracking-widest text-gold font-bold bg-black/75 px-1 py-0.5 rounded border border-gold/40">
+                AF-LOCK
+              </span>
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* INSIDE CAMERA SCREEN: Statement ("Three decades...")     */}
+          {/* ======================================================== */}
+          <div
+            ref={statementRef}
+            className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center px-6 md:px-12 py-10 opacity-0 pointer-events-none will-change-transform"
+          >
+            <div className="max-w-xl mx-auto flex flex-col items-center">
+              <Eyebrow>About our studio</Eyebrow>
+              <h2 className="mt-2.5 font-display text-xl sm:text-2xl md:text-3xl font-light leading-snug tracking-tight text-foreground">
+                Three decades of crafting timeless family memories.
+              </h2>
+              <p className="mt-3 text-xs md:text-sm text-muted-foreground font-light max-w-sm leading-relaxed">
+                Every smile, vow, and quiet glance preserved with cinematic soul from Mira Road East since 1994.
+              </p>
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* INSIDE CAMERA SCREEN: Serpentine Curved Ribbon of Photos */}
+          {/* ======================================================== */}
+          <div
+            ref={serpentineStageRef}
+            className="pointer-events-none absolute inset-0 z-20 opacity-0 overflow-hidden"
             style={{ transformStyle: "preserve-3d" }}
           >
-            {cylinderCards.map((item, idx) => (
-              <div
-                key={`cyl-${idx}`}
-                className="absolute left-0 top-0 w-[150px] md:w-[190px] will-change-transform pointer-events-auto"
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <Crazy3DCard
-                  src={item.src}
-                  title={item.title}
-                  category={item.category}
-                  frameNumber={`FRAME #${String((idx % 7) + 1).padStart(2, "0")}`}
-                  showBadge={idx === 0 || idx === 1}
-                />
+            <div ref={serpentineTrackRef} className="absolute inset-0">
+              {ribbonCards.map((item, idx) => (
+                <div
+                  key={`ribbon-${idx}`}
+                  className="absolute left-0 top-0 w-28 md:w-44 p-2 rounded-lg bg-card/95 border border-border/80 shadow-2xl backdrop-blur-md will-change-transform pointer-events-auto"
+                >
+                  <div className="flex items-center justify-between pb-1 px-1 text-[8px] font-mono tracking-widest text-muted-foreground border-b border-border/60">
+                    <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
+                    <span className="text-gold font-semibold">• 35MM</span>
+                  </div>
+                  <div className="w-full aspect-[4/5] mt-1.5 rounded overflow-hidden bg-muted/20 relative">
+                    <img
+                      src={item.src}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="pt-1.5 px-1 flex justify-between items-center text-[10px]">
+                    <span className="font-display text-foreground truncate">{item.title}</span>
+                    <span className="font-mono text-[9px] text-muted-foreground">{item.category}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* INSIDE CAMERA SCREEN: Wide 3D Panoramic Cylinder Reel    */}
+          {/* ======================================================== */}
+          <div
+            ref={cylinderStageRef}
+            className="pointer-events-none absolute inset-0 z-25 flex flex-col items-center justify-center opacity-0 overflow-hidden"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {/* Section Heading inside camera screen */}
+            <div className="absolute top-12 md:top-16 z-20 text-center px-4">
+              <Eyebrow>Selected frames</Eyebrow>
+              <h3 className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-light tracking-tight text-foreground">
+                Stories we've told lately
+              </h3>
+            </div>
+
+            {/* Cylinder reel */}
+            <div
+              ref={cylinderWrapperRef}
+              className="relative w-[150px] md:w-[210px] h-[200px] md:h-[260px] mt-10 md:mt-14"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              {cylinderCards.map((item, idx) => (
+                <div
+                  key={`cyl-${idx}`}
+                  className="absolute left-0 top-0 w-[130px] md:w-[170px] will-change-transform pointer-events-auto"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <Crazy3DCard
+                    src={item.src}
+                    title={item.title}
+                    category={item.category}
+                    frameNumber={`FRAME #${String((idx % 7) + 1).padStart(2, "0")}`}
+                    showBadge={idx === 0 || idx === 1}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Action button inside camera screen */}
+            <div className="absolute bottom-12 md:bottom-16 z-20 pointer-events-auto">
+              <OutlineButton to="/portfolio">
+                View full portfolio
+              </OutlineButton>
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* VIEW FINDER HUD OVERLAY (Framing the Camera Screen)      */}
+          {/* ======================================================== */}
+          <div className="pointer-events-none absolute inset-0 z-30 select-none flex flex-col justify-between p-3 md:p-5">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between text-[9px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/75 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-gold/30 shadow-2xl">
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
+                <span className="font-bold text-white tracking-wider">REC</span>
+                <span className="text-white/70">00:19:94:24</span>
+                <span className="hidden sm:inline text-gold/40">·</span>
+                <span className="hidden sm:inline text-gold font-medium">4K CINE LOG</span>
               </div>
-            ))}
-          </div>
-
-          {/* Action button anchored cleanly at bottom */}
-          <div className="absolute bottom-10 md:bottom-14 z-20 pointer-events-auto">
-            <OutlineButton to="/portfolio">
-              View full portfolio
-            </OutlineButton>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------ */}
-        {/* CINEMA VIEWFINDER DISPLAY OVERLAY (Inside Camera Screen)     */}
-        {/* ------------------------------------------------------------ */}
-        <div
-          ref={viewfinderRef}
-          className="pointer-events-none absolute inset-0 z-30 opacity-0 transition-opacity duration-150 select-none flex flex-col justify-between p-4 md:p-8"
-        >
-          {/* Top Letterbox Bar */}
-          <div className="flex items-center justify-between text-[10px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-lg border border-gold/30 shadow-2xl">
-            <div className="flex items-center gap-2.5">
-              <span className="size-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
-              <span className="font-bold text-white tracking-wider">REC</span>
-              <span className="text-white/70">00:19:94:24</span>
-              <span className="hidden sm:inline text-gold/40">·</span>
-              <span className="hidden sm:inline text-gold font-medium">4K CINE LOG</span>
+              <div className="flex items-center gap-2.5 text-white/80">
+                <span>f/1.4</span>
+                <span>1/250s</span>
+                <span className="text-gold font-bold">ISO 100</span>
+                <span className="text-emerald-400">98% 🔋</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-white/80">
-              <span>f/1.4</span>
-              <span>1/250s</span>
-              <span className="text-gold font-bold">ISO 100</span>
-              <span className="text-emerald-400">98% 🔋</span>
-            </div>
-          </div>
 
-          {/* Golden Viewfinder Framing Reticle & Grid Lines */}
-          <div className="absolute inset-8 md:inset-14 pointer-events-none">
-            {/* 4 Golden Corner Brackets */}
-            <div className="absolute top-0 left-0 w-8 md:w-16 h-8 md:h-16 border-t-2 border-l-2 border-gold/70" />
-            <div className="absolute top-0 right-0 w-8 md:w-16 h-8 md:h-16 border-t-2 border-r-2 border-gold/70" />
-            <div className="absolute bottom-0 left-0 w-8 md:w-16 h-8 md:h-16 border-b-2 border-l-2 border-gold/70" />
-            <div className="absolute bottom-0 right-0 w-8 md:w-16 h-8 md:h-16 border-b-2 border-r-2 border-gold/70" />
+            {/* Framing Corner Brackets & Grid Lines */}
+            <div className="absolute inset-4 md:inset-8 pointer-events-none">
+              <div className="absolute top-0 left-0 w-5 md:w-10 h-5 md:h-10 border-t-2 border-l-2 border-gold/70" />
+              <div className="absolute top-0 right-0 w-5 md:w-10 h-5 md:h-10 border-t-2 border-r-2 border-gold/70" />
+              <div className="absolute bottom-0 left-0 w-5 md:w-10 h-5 md:h-10 border-b-2 border-l-2 border-gold/70" />
+              <div className="absolute bottom-0 right-0 w-5 md:w-10 h-5 md:h-10 border-b-2 border-r-2 border-gold/70" />
 
-            {/* Subtle Rule-of-Thirds Grid */}
-            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-15">
-              <div className="border-r border-b border-white" />
-              <div className="border-r border-b border-white" />
-              <div className="border-b border-white" />
-              <div className="border-r border-b border-white" />
-              <div className="border-r border-b border-white" />
-              <div className="border-b border-white" />
+              {/* Rule-of-Thirds Grid */}
+              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-15">
+                <div className="border-r border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-b border-white" />
+              </div>
             </div>
-          </div>
 
-          {/* Bottom Letterbox Bar */}
-          <div className="flex items-center justify-between text-[10px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-lg border border-gold/30 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <span className="text-white font-semibold">UTSAV STUDIO</span>
-              <span className="text-muted-foreground hidden sm:inline">MIRA ROAD EAST · EST. 1994</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-gold">PLAYBACK REEL</span>
-              <span className="text-white/60">[18 CINE FRAMES]</span>
+            {/* Bottom Bar */}
+            <div className="flex items-center justify-between text-[9px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/75 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-gold/30 shadow-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold">35MM PRIME · UTSAV</span>
+                <span className="text-emerald-400 font-mono text-[8px] md:text-[9px] hidden sm:inline">[AF-C · EYE-TRACK]</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span ref={hudModeRef} className="text-gold font-mono text-[8px] md:text-[10px]">
+                  [LAST SHOT · CAPTURE REVIEW]
+                </span>
+              </div>
             </div>
           </div>
         </div>

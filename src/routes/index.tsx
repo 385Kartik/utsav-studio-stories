@@ -16,7 +16,6 @@ import { SelectedWorkGallery } from "@/components/SelectedWorkGallery";
 import { CinematicMarquee } from "@/components/CinematicMarquee";
 import { Anime3DToolbox } from "@/components/Anime3DToolbox";
 import { AnimeHeroDial } from "@/components/AnimeHeroDial";
-import { Scroll3DCamera } from "@/components/Scroll3DCamera";
 import { galleryItems, media, serviceGroups } from "@/lib/media";
 
 export const Route = createFileRoute("/")({
@@ -45,10 +44,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main>
-      {/* Real-time 3D Rangefinder Camera moving on scroll */}
-      <Scroll3DCamera />
-
-      {/* 3D Curved Serpentine & Cylinder Experience */}
+      {/* 3D Storytelling Experience with Camera & Curved Reel */}
       <CurvedReelScrollExperience items={galleryItems} heroImage={media.hero} />
 
       {/* Infinite Cinematic Marquee Ticker */}

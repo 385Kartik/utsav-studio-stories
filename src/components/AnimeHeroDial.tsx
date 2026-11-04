@@ -206,10 +206,10 @@ export function AnimeHeroDial({ className = "" }: { className?: string }) {
             const angle = (i * 4 * Math.PI) / 180;
             const r1 = i % 5 === 0 ? 154 : 160;
             const r2 = 168;
-            const x1 = 200 + Math.cos(angle) * r1;
-            const y1 = 200 + Math.sin(angle) * r1;
-            const x2 = 200 + Math.cos(angle) * r2;
-            const y2 = 200 + Math.sin(angle) * r2;
+            const x1 = Math.round((200 + Math.cos(angle) * r1) * 100) / 100;
+            const y1 = Math.round((200 + Math.sin(angle) * r1) * 100) / 100;
+            const x2 = Math.round((200 + Math.cos(angle) * r2) * 100) / 100;
+            const y2 = Math.round((200 + Math.sin(angle) * r2) * 100) / 100;
             return (
               <line
                 key={i}
