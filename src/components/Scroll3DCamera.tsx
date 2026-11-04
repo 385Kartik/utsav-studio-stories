@@ -393,17 +393,17 @@ export function Scroll3DCamera() {
       const breathY = Math.sin(clock * 1.4) * 0.03;
       const breathRot = Math.cos(clock * 1.1) * 0.012;
 
-      // Trigger photo flash burst around p = 0.07 -> 0.09
-      if (p >= 0.07 && p <= 0.12 && !s.hasFlashed) {
+      // Trigger photo flash burst around p = 0.05 -> 0.07
+      if (p >= 0.05 && p <= 0.09 && !s.hasFlashed) {
         s.hasFlashed = true;
         setFlashTrigger(true);
         setTimeout(() => setFlashTrigger(false), 240);
-      } else if (p < 0.04) {
+      } else if (p < 0.03) {
         s.hasFlashed = false;
       }
 
       if (!isInteractive) {
-        if (p <= 0.08) {
+        if (p <= 0.06) {
           // Phase A: Aiming at scene below the main headline, locking focus
           setHudPhase("aim");
           lcdGroup.visible = false; // Never show LCD from the front in hero!
@@ -412,10 +412,10 @@ export function Scroll3DCamera() {
           masterPivot.scale.setScalar(0.65);
           mount.style.opacity = "1";
           mount.style.pointerEvents = "none";
-        } else if (p > 0.08 && p <= 0.22) {
+        } else if (p > 0.06 && p <= 0.18) {
           // Phase B: Flip 180° on Y & elevate to center — Ooltah Ghumna! Display reveals photo!
           setHudPhase("flip");
-          const factor = (p - 0.08) / 0.14;
+          const factor = (p - 0.06) / 0.12;
           const eased = (1 - Math.cos(factor * Math.PI)) / 2;
 
           // Reveal LCD once rotating towards viewer
@@ -423,40 +423,31 @@ export function Scroll3DCamera() {
 
           const rotY = -0.12 + eased * (Math.PI + 0.12); // -0.12 to 180° (Math.PI)
           const posY = -1.38 + eased * 1.38; // Elevates from -1.38 to 0.0 center
-          const posZ = 1.05 + eased * 1.15; // 1.05 to 2.2
-          const scale = 0.65 + eased * 0.52; // 0.65 to 1.17
+          const posZ = 1.05 + eased * 0.85; // Gently elevates from 1.05 to 1.90
+          const scale = 0.65 + eased * 0.42; // Scales to 1.07
 
-          masterPivot.position.set(0.0 + s.mouseX * 0.15, posY - s.mouseY * 0.1 + breathY, posZ);
-          masterPivot.rotation.set(0.02 - s.mouseY * 0.05, rotY + s.mouseX * 0.08, 0);
+          masterPivot.position.set(0.0 + s.mouseX * 0.12, posY - s.mouseY * 0.08 + breathY, posZ);
+          masterPivot.rotation.set(0.02 - s.mouseY * 0.04, rotY + s.mouseX * 0.06, 0);
           masterPivot.scale.setScalar(scale);
           mount.style.opacity = "1";
           mount.style.pointerEvents = "none";
-        } else if (p > 0.22 && p <= 0.36) {
-          // Phase C: Zoom into the LCD monitor until it fills the whole screen!
+        } else if (p > 0.18 && p <= 0.24) {
+          // Phase C: STOP ZOOMING HERE! Camera screen freezes in center, seamless crossfade to photos
           setHudPhase("zoom");
           lcdGroup.visible = true;
-          const factor = (p - 0.22) / 0.14;
-          const eased = factor * factor; // Quadratic acceleration into screen
 
-          // posZ moves from 2.2 all the way to 7.8 (right in front of lens)
-          const posZ = 2.2 + eased * 5.6;
-          const scale = 1.17 + eased * 2.8;
-
-          masterPivot.position.set(0.0, 0.0, posZ);
+          // Freeze position and scale — DO NOT zoom deeper into the copper chassis!
+          masterPivot.position.set(0.0, 0.0, 1.90);
           masterPivot.rotation.set(0.0, Math.PI, 0);
-          masterPivot.scale.setScalar(scale);
+          masterPivot.scale.setScalar(1.07);
 
-          // Crossfade into 2D fullscreen viewfinder at the climax
-          if (p >= 0.32) {
-            const fade = Math.max(0, 1 - (p - 0.32) / 0.04);
-            mount.style.opacity = String(fade);
-          } else {
-            mount.style.opacity = "1";
-          }
+          // Smoothly crossfade out 3D chassis so the fullscreen viewfinder and photos take over
+          const fadeFactor = (p - 0.18) / 0.06;
+          mount.style.opacity = String(Math.max(0, 1 - fadeFactor));
           mount.style.pointerEvents = "none";
         } else {
           // Phase D & Beyond: Inside the Viewfinder & Rest of the Website!
-          // Camera has completed its cinematic prologue; stays 100% hidden and unblocking!
+          // Camera stays completely hidden so all photos, ribbon & cylinder reel display cleanly!
           setHudPhase("inside");
           lcdGroup.visible = false;
           mount.style.opacity = "0";
