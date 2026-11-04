@@ -1139,7 +1139,7 @@ export function CurvedReelScrollExperience({
         <div
           ref={cameraScreenRef}
           className="absolute z-20 rounded-xl md:rounded-2xl border border-white/10 bg-[#080706] overflow-hidden select-none will-change-transform shadow-[inset_0_0_40px_rgba(0,0,0,0.85)] opacity-0"
-          style={{ transformStyle: "preserve-3d" }}
+          style={{ transformStyle: "preserve-3d", containerType: "inline-size" }}
         >
           {/* ======================================================== */}
           {/* INSIDE CAMERA SCREEN: Captured Wedding Photo Review       */}
@@ -1158,9 +1158,9 @@ export function CurvedReelScrollExperience({
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
 
             {/* Autofocus Bracket directly locked on the happy couple */}
-            <div className="absolute left-[54%] top-[48%] -translate-x-1/2 -translate-y-1/2 size-12 md:size-16 border-2 border-gold/90 rounded-sm flex items-center justify-center shadow-[0_0_12px_rgba(212,163,89,0.4)]">
-              <span className="text-gold text-xs font-mono font-bold">+</span>
-              <span className="absolute -top-4 right-0 text-[8px] font-mono tracking-widest text-gold font-bold bg-black/75 px-1 py-0.5 rounded border border-gold/40">
+            <div className="absolute left-[54%] top-[48%] -translate-x-1/2 -translate-y-1/2 w-[clamp(20px,6cqw,52px)] h-[clamp(20px,6cqw,52px)] border-[1.5px] border-gold/90 rounded-[2px] flex items-center justify-center shadow-[0_0_10px_rgba(212,163,89,0.4)]">
+              <span className="text-gold text-[clamp(7px,1.6cqw,13px)] font-mono font-bold leading-none">+</span>
+              <span className="absolute -top-[2cqw] right-0 text-[clamp(5px,1.1cqw,8.5px)] font-mono tracking-widest text-gold font-bold bg-black/85 px-[0.6cqw] py-[0.2cqw] rounded border border-gold/40 leading-none whitespace-nowrap">
                 AF-LOCK
               </span>
             </div>
@@ -1171,14 +1171,16 @@ export function CurvedReelScrollExperience({
           {/* ======================================================== */}
           <div
             ref={statementRef}
-            className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center px-6 md:px-12 py-10 opacity-0 pointer-events-none will-change-transform"
+            className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center px-[6cqw] py-[4cqw] opacity-0 pointer-events-none will-change-transform"
           >
-            <div className="max-w-xl mx-auto flex flex-col items-center">
-              <Eyebrow>About our studio</Eyebrow>
-              <h2 className="mt-2.5 font-display text-xl sm:text-2xl md:text-3xl font-light leading-snug tracking-tight text-foreground">
+            <div className="max-w-[82cqw] mx-auto flex flex-col items-center">
+              <span className="text-[clamp(6px,1.35cqw,11px)] uppercase tracking-[0.35em] text-gold/90 font-mono font-medium leading-none">
+                About our studio
+              </span>
+              <h2 className="mt-[1.5cqw] font-display text-[clamp(11px,3.2cqw,28px)] font-light leading-[1.24] tracking-tight text-foreground">
                 Three decades of crafting timeless family memories.
               </h2>
-              <p className="mt-3 text-xs md:text-sm text-muted-foreground font-light max-w-sm leading-relaxed">
+              <p className="mt-[1.5cqw] text-[clamp(7px,1.55cqw,13px)] text-muted-foreground font-light max-w-[68cqw] leading-relaxed">
                 Every smile, vow, and quiet glance preserved with cinematic soul from Mira Road East since 1994.
               </p>
             </div>
@@ -1196,9 +1198,9 @@ export function CurvedReelScrollExperience({
               {ribbonCards.map((item, idx) => (
                 <div
                   key={`ribbon-${idx}`}
-                  className="absolute left-0 top-0 w-28 md:w-44 p-2 rounded-lg bg-card/95 border border-border/80 shadow-2xl backdrop-blur-md will-change-transform pointer-events-auto"
+                  className="absolute left-0 top-0 w-[clamp(85px,22cqw,175px)] p-[clamp(5px,1.2cqw,10px)] rounded-lg bg-card/95 border border-border/80 shadow-2xl backdrop-blur-md will-change-transform pointer-events-auto"
                 >
-                  <div className="flex items-center justify-between pb-1 px-1 text-[8px] font-mono tracking-widest text-muted-foreground border-b border-border/60">
+                  <div className="flex items-center justify-between pb-1 px-0.5 text-[clamp(6px,1.1cqw,8.5px)] font-mono tracking-widest text-muted-foreground border-b border-border/60">
                     <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
                     <span className="text-gold font-semibold">• 35MM</span>
                   </div>
@@ -1210,9 +1212,9 @@ export function CurvedReelScrollExperience({
                       loading="lazy"
                     />
                   </div>
-                  <div className="pt-1.5 px-1 flex justify-between items-center text-[10px]">
+                  <div className="pt-1.5 px-0.5 flex justify-between items-center text-[clamp(7px,1.3cqw,10.5px)] leading-none">
                     <span className="font-display text-foreground truncate">{item.title}</span>
-                    <span className="font-mono text-[9px] text-muted-foreground">{item.category}</span>
+                    <span className="font-mono text-[clamp(6px,1.1cqw,9px)] text-muted-foreground shrink-0 ml-1">{item.category}</span>
                   </div>
                 </div>
               ))}
@@ -1228,9 +1230,11 @@ export function CurvedReelScrollExperience({
             style={{ transformStyle: "preserve-3d" }}
           >
             {/* Section Heading inside camera screen */}
-            <div className="absolute top-12 md:top-16 z-20 text-center px-4">
-              <Eyebrow>Selected frames</Eyebrow>
-              <h3 className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-light tracking-tight text-foreground">
+            <div className="absolute top-[4cqw] z-20 text-center px-[4cqw]">
+              <span className="text-[clamp(6px,1.35cqw,11px)] uppercase tracking-[0.35em] text-gold/90 font-mono font-medium leading-none">
+                Selected frames
+              </span>
+              <h3 className="mt-[1cqw] font-display text-[clamp(11px,3.1cqw,28px)] font-light tracking-tight text-foreground">
                 Stories we've told lately
               </h3>
             </div>
@@ -1238,13 +1242,13 @@ export function CurvedReelScrollExperience({
             {/* Cylinder reel */}
             <div
               ref={cylinderWrapperRef}
-              className="relative w-[150px] md:w-[210px] h-[200px] md:h-[260px] mt-10 md:mt-14"
+              className="relative w-[clamp(120px,26cqw,210px)] h-[clamp(160px,34cqw,260px)] mt-[clamp(24px,6cqw,56px)]"
               style={{ transformStyle: "preserve-3d" }}
             >
               {cylinderCards.map((item, idx) => (
                 <div
                   key={`cyl-${idx}`}
-                  className="absolute left-0 top-0 w-[130px] md:w-[170px] will-change-transform pointer-events-auto"
+                  className="absolute left-0 top-0 w-[clamp(100px,22cqw,170px)] will-change-transform pointer-events-auto"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   <Crazy3DCard
@@ -1259,7 +1263,7 @@ export function CurvedReelScrollExperience({
             </div>
 
             {/* Action button inside camera screen */}
-            <div className="absolute bottom-12 md:bottom-16 z-20 pointer-events-auto">
+            <div className="absolute bottom-[4.5cqw] z-20 pointer-events-auto scale-[clamp(0.72,0.18+0.7cqw,1)] origin-bottom">
               <OutlineButton to="/portfolio">
                 View full portfolio
               </OutlineButton>
@@ -1269,17 +1273,17 @@ export function CurvedReelScrollExperience({
           {/* ======================================================== */}
           {/* VIEW FINDER HUD OVERLAY (Framing the Camera Screen)      */}
           {/* ======================================================== */}
-          <div className="pointer-events-none absolute inset-0 z-30 select-none flex flex-col justify-between p-3 md:p-5">
-            {/* Top Bar */}
-            <div className="flex items-center justify-between text-[9px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/75 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-gold/30 shadow-2xl">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
-                <span className="font-bold text-white tracking-wider">REC</span>
-                <span className="text-white/70">00:19:94:24</span>
-                <span className="hidden sm:inline text-gold/40">·</span>
-                <span className="hidden sm:inline text-gold font-medium">4K CINE LOG</span>
+          <div className="pointer-events-none absolute inset-0 z-30 select-none flex flex-col justify-between">
+            {/* Top Bar with gentle cinema vignette */}
+            <div className="w-full bg-gradient-to-b from-black/85 via-black/35 to-transparent px-[3.5cqw] pt-[2.2cqw] pb-[3cqw] flex items-center justify-between text-[clamp(6px,1.5cqw,11px)] font-mono tracking-wider text-gold/90 whitespace-nowrap leading-none select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+              <div className="flex items-center gap-[1.2cqw]">
+                <span className="size-[clamp(4px,1cqw,7px)] rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_#ef4444] shrink-0" />
+                <span className="font-bold text-white tracking-widest">REC</span>
+                <span className="text-white/80 font-mono">00:19:94:24</span>
+                <span className="text-gold/40">·</span>
+                <span className="text-gold font-medium">4K CINE LOG</span>
               </div>
-              <div className="flex items-center gap-2.5 text-white/80">
+              <div className="flex items-center gap-[1.5cqw] text-white/80 font-mono">
                 <span>f/1.4</span>
                 <span>1/250s</span>
                 <span className="text-gold font-bold">ISO 100</span>
@@ -1288,11 +1292,11 @@ export function CurvedReelScrollExperience({
             </div>
 
             {/* Framing Corner Brackets & Grid Lines */}
-            <div className="absolute inset-4 md:inset-8 pointer-events-none">
-              <div className="absolute top-0 left-0 w-5 md:w-10 h-5 md:h-10 border-t-2 border-l-2 border-gold/70" />
-              <div className="absolute top-0 right-0 w-5 md:w-10 h-5 md:h-10 border-t-2 border-r-2 border-gold/70" />
-              <div className="absolute bottom-0 left-0 w-5 md:w-10 h-5 md:h-10 border-b-2 border-l-2 border-gold/70" />
-              <div className="absolute bottom-0 right-0 w-5 md:w-10 h-5 md:h-10 border-b-2 border-r-2 border-gold/70" />
+            <div className="absolute inset-[3.5cqw] pointer-events-none">
+              <div className="absolute top-0 left-0 w-[clamp(8px,2.8cqw,24px)] h-[clamp(8px,2.8cqw,24px)] border-t-[1.5px] border-l-[1.5px] border-gold/70" />
+              <div className="absolute top-0 right-0 w-[clamp(8px,2.8cqw,24px)] h-[clamp(8px,2.8cqw,24px)] border-t-[1.5px] border-r-[1.5px] border-gold/70" />
+              <div className="absolute bottom-0 left-0 w-[clamp(8px,2.8cqw,24px)] h-[clamp(8px,2.8cqw,24px)] border-b-[1.5px] border-l-[1.5px] border-gold/70" />
+              <div className="absolute bottom-0 right-0 w-[clamp(8px,2.8cqw,24px)] h-[clamp(8px,2.8cqw,24px)] border-b-[1.5px] border-r-[1.5px] border-gold/70" />
 
               {/* Rule-of-Thirds Grid */}
               <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-15">
@@ -1305,14 +1309,14 @@ export function CurvedReelScrollExperience({
               </div>
             </div>
 
-            {/* Bottom Bar */}
-            <div className="flex items-center justify-between text-[9px] md:text-xs font-mono tracking-widest text-gold/90 bg-black/75 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-gold/30 shadow-2xl">
-              <div className="flex items-center gap-2">
+            {/* Bottom Bar with gentle cinema vignette */}
+            <div className="w-full bg-gradient-to-t from-black/85 via-black/35 to-transparent px-[3.5cqw] pb-[2.2cqw] pt-[3cqw] flex items-center justify-between text-[clamp(5.8px,1.35cqw,10.5px)] font-mono tracking-wider text-gold/90 whitespace-nowrap leading-none select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+              <div className="flex items-center gap-[1.2cqw]">
                 <span className="text-white font-semibold">35MM PRIME · UTSAV</span>
-                <span className="text-emerald-400 font-mono text-[8px] md:text-[9px] hidden sm:inline">[AF-C · EYE-TRACK]</span>
+                <span className="text-emerald-400 font-mono text-[clamp(5.2px,1.2cqw,9px)]">[AF-C · EYE-TRACK]</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span ref={hudModeRef} className="text-gold font-mono text-[8px] md:text-[10px]">
+              <div className="flex items-center gap-[1.2cqw]">
+                <span ref={hudModeRef} className="text-gold font-mono text-[clamp(5.2px,1.2cqw,9.5px)]">
                   [LAST SHOT · CAPTURE REVIEW]
                 </span>
               </div>
