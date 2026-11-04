@@ -705,11 +705,11 @@ export function CurvedReelScrollExperience({
       const applyFrame = (p: number) => {
         // 1. Live HUD Telemetry Tag
         if (hudModeRef.current) {
-          if (p < 0.32) {
+          if (p < 0.28) {
             hudModeRef.current.textContent = "[LAST SHOT · CAPTURE REVIEW]";
-          } else if (p >= 0.32 && p < 0.50) {
+          } else if (p >= 0.28 && p < 0.44) {
             hudModeRef.current.textContent = "[STUDIO STATEMENT · REC.709]";
-          } else if (p >= 0.50 && p < 0.72) {
+          } else if (p >= 0.44 && p < 0.70) {
             hudModeRef.current.textContent = "[SERPENTINE REEL · 7 FRAMES]";
           } else {
             hudModeRef.current.textContent = "[STORIES CYLINDER · 8 FRAMES]";
@@ -803,7 +803,8 @@ export function CurvedReelScrollExperience({
         } else {
           // "CAMARA KO PASS LAATE REH":
           // The camera stays facing the viewer (PI) and zooms forward closer and closer!
-          const zoomNorm = Math.min(1, Math.max(0, (p - 0.18) / 0.74));
+          // Zoom finishes 100% by p = 0.68 right as ribbon ends!
+          const zoomNorm = Math.min(1, Math.max(0, (p - 0.18) / 0.50));
           const zoomEased = zoomNorm; // steady cinematic forward dolly
 
           basePosY = -0.05;
@@ -833,13 +834,13 @@ export function CurvedReelScrollExperience({
           cameraScreen.style.pointerEvents = screenOpacity > 0.5 ? "auto" : "none";
         }
 
-        // 7. Layer A: Captured Wedding Photo Review (0.08 -> 0.34)
+        // 7. Layer A: Captured Wedding Photo Review (0.08 -> 0.30)
         if (capturedPhoto) {
-          if (p >= 0.08 && p <= 0.34) {
+          if (p >= 0.08 && p <= 0.30) {
             let photoOpacity = 1;
             const photoScale = 1.0 + (p - 0.08) * 0.18;
             if (p < 0.13) photoOpacity = (p - 0.08) / 0.05;
-            else if (p > 0.28) photoOpacity = 1 - (p - 0.28) / 0.06;
+            else if (p > 0.25) photoOpacity = 1 - (p - 0.25) / 0.05;
 
             capturedPhoto.style.opacity = String(Math.max(0, Math.min(1, photoOpacity)));
             capturedPhoto.style.transform = `scale(${photoScale})`;
@@ -848,29 +849,29 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 8. Layer B: Studio Editorial Statement (0.30 -> 0.52)
+        // 8. Layer B: Studio Editorial Statement (0.28 -> 0.44)
         if (stmt) {
-          if (p >= 0.30 && p <= 0.52) {
+          if (p >= 0.28 && p <= 0.44) {
             let stmtOpacity = 1;
-            if (p < 0.35) stmtOpacity = (p - 0.30) / 0.05;
-            else if (p > 0.46) stmtOpacity = 1 - (p - 0.46) / 0.06;
+            if (p < 0.33) stmtOpacity = (p - 0.28) / 0.05;
+            else if (p > 0.39) stmtOpacity = 1 - (p - 0.39) / 0.05;
 
             stmt.style.opacity = String(Math.max(0, stmtOpacity));
-            stmt.style.transform = `translate3d(0, ${(0.36 - p) * 32}px, 0)`;
+            stmt.style.transform = `translate3d(0, ${(0.35 - p) * 32}px, 0)`;
           } else {
             stmt.style.opacity = "0";
           }
         }
 
-        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.46 -> 0.74, 15% overlap)
+        // 9. Layer C: Serpentine Curved Ribbon of Photos (0.44 -> 0.69, 15% overlap)
         if (serpStage) {
-          if (p >= 0.46 && p <= 0.74) {
+          if (p >= 0.44 && p <= 0.69) {
             let ribbonOpacity = 1;
-            if (p < 0.51) ribbonOpacity = (p - 0.46) / 0.05;
-            else if (p > 0.69) ribbonOpacity = 1 - (p - 0.69) / 0.05;
+            if (p < 0.49) ribbonOpacity = (p - 0.44) / 0.05;
+            else if (p > 0.64) ribbonOpacity = 1 - (p - 0.64) / 0.05;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.46) / 0.28;
+            const ribbonProgress = (p - 0.44) / 0.24;
             serpCards.forEach((card, idx) => {
               // 15% overlap between adjacent cards: spacing = 0.214
               const spacing = 0.214;
@@ -899,18 +900,18 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 10. Layer D: 3D Cylindrical Story Reel (0.72 -> 0.98, spacious & large)
+        // 10. Layer D: 3D Cylindrical Story Reel (0.70 -> 0.98, full zoom & large photos)
         if (cylStage && cylWrapper) {
-          if (p >= 0.72 && p <= 0.98) {
+          if (p >= 0.70 && p <= 0.98) {
             let reelOpacity = 1;
-            if (p < 0.76) reelOpacity = (p - 0.72) / 0.04;
+            if (p < 0.74) reelOpacity = (p - 0.70) / 0.04;
             else if (p > 0.95) reelOpacity = 1 - (p - 0.95) / 0.03;
             cylStage.style.opacity = String(Math.max(0, Math.min(1, reelOpacity)));
 
             const cylinderCount = cylCards.length || 8;
-            // Generous radius so cards never intersect or collide
-            const radius = isMobile ? 190 : Math.min(curScreenW * 0.42, 420);
-            const reelNorm = (p - 0.72) / 0.24;
+            // Generous radius so large cards never intersect or collide
+            const radius = isMobile ? 220 : Math.min(curScreenW * 0.48, 520);
+            const reelNorm = (p - 0.70) / 0.25;
             // Rotate through cards: each wheel notch advances 45° (one full card!)
             const currentRot = reelNorm * 180;
 
@@ -922,12 +923,25 @@ export function CurvedReelScrollExperience({
               const z = Math.cos(rad) * radius;
 
               card.style.transform = `translate3d(${x}px, 0px, ${z}px) translate(-50%, -50%) rotateY(${cardDeg}deg)`;
-              const depthAlpha = 0.22 + ((z + radius) / (radius * 2)) * 0.78;
-              card.style.opacity = String(depthAlpha);
+
+              // Only show cards on the front-facing arc (facing the camera)
+              // Cards on the back half (z <= 0) smoothly fade out to 0 to prevent ghosting
+              if (z > -radius * 0.05) {
+                const normZ = Math.max(0, (z + radius * 0.05) / (radius * 1.05));
+                const depthAlpha = Math.pow(normZ, 1.15);
+                card.style.opacity = String(depthAlpha);
+                card.style.visibility = "visible";
+                card.style.pointerEvents = depthAlpha > 0.65 ? "auto" : "none";
+              } else {
+                card.style.opacity = "0";
+                card.style.visibility = "hidden";
+                card.style.pointerEvents = "none";
+              }
+
               card.style.zIndex = String(Math.round(z + 500));
             });
 
-            cylWrapper.style.transform = `rotateX(${isMobile ? 4 : 7}deg) rotateZ(-1deg)`;
+            cylWrapper.style.transform = `rotateX(${isMobile ? 3 : 6}deg) rotateZ(-1deg)`;
           } else {
             cylStage.style.opacity = "0";
           }
@@ -942,17 +956,17 @@ export function CurvedReelScrollExperience({
           scrub: 0.6,
           snap: {
             snapTo: (value) => {
-              // 1. Serpentine Ribbon Stage (0.46 -> 0.74): 1 mouse wheel notch = 1 photo!
-              if (value >= 0.45 && value <= 0.75) {
-                const ribbonNorm = Math.max(0, Math.min(1, (value - 0.46) / 0.28));
+              // 1. Serpentine Ribbon Stage (0.44 -> 0.69): 1 mouse wheel notch = 1 photo!
+              if (value >= 0.43 && value <= 0.69) {
+                const ribbonNorm = Math.max(0, Math.min(1, (value - 0.44) / 0.24));
                 const step = Math.round(ribbonNorm * 6) / 6;
-                return 0.46 + step * 0.28;
+                return 0.44 + step * 0.24;
               }
-              // 2. Cylinder Reel Stage (0.72 -> 0.98): 1 mouse wheel notch = 1 cylinder card!
-              if (value > 0.75 && value <= 0.98) {
-                const cylNorm = Math.max(0, Math.min(1, (value - 0.72) / 0.24));
+              // 2. Cylinder Reel Stage (0.70 -> 0.98): 1 mouse wheel notch = 1 cylinder card!
+              if (value >= 0.70 && value <= 0.98) {
+                const cylNorm = Math.max(0, Math.min(1, (value - 0.70) / 0.25));
                 const step = Math.round(cylNorm * 4) / 4;
-                return 0.72 + step * 0.24;
+                return 0.70 + step * 0.25;
               }
               return value;
             },
@@ -1278,11 +1292,11 @@ export function CurvedReelScrollExperience({
             style={{ transformStyle: "preserve-3d" }}
           >
             {/* Section Heading inside camera screen */}
-            <div className="absolute top-[4cqw] z-20 text-center px-[4cqw]">
+            <div className="absolute top-[2.5cqw] z-20 text-center px-[4cqw]">
               <span className="text-[clamp(6px,1.35cqw,11px)] uppercase tracking-[0.35em] text-gold/90 font-mono font-medium leading-none">
                 Selected frames
               </span>
-              <h3 className="mt-[1cqw] font-display text-[clamp(11px,3.1cqw,28px)] font-light tracking-tight text-foreground">
+              <h3 className="mt-[0.8cqw] font-display text-[clamp(11px,3.1cqw,28px)] font-light tracking-tight text-foreground">
                 Stories we've told lately
               </h3>
             </div>
@@ -1290,14 +1304,14 @@ export function CurvedReelScrollExperience({
             {/* Cylinder reel */}
             <div
               ref={cylinderWrapperRef}
-              className="relative w-[clamp(160px,26cqw,240px)] h-[clamp(220px,36cqw,330px)] mt-[clamp(16px,3cqw,36px)]"
+              className="relative w-[clamp(210px,32cqw,360px)] h-[clamp(290px,44cqw,470px)] mt-[clamp(6px,1.2cqw,16px)]"
               style={{ transformStyle: "preserve-3d" }}
             >
               {cylinderCards.map((item, idx) => (
                 <div
                   key={`cyl-${idx}`}
-                  className="absolute left-0 top-0 w-[clamp(150px,24cqw,225px)] will-change-transform pointer-events-auto"
-                  style={{ transformStyle: "preserve-3d" }}
+                  className="absolute left-1/2 top-1/2 w-[clamp(210px,32cqw,360px)] will-change-transform pointer-events-auto"
+                  style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
                 >
                   <Crazy3DCard
                     src={item.src}
@@ -1305,13 +1319,15 @@ export function CurvedReelScrollExperience({
                     category={item.category}
                     frameNumber={`FRAME #${String((idx % 8) + 1).padStart(2, "0")}`}
                     showBadge={idx === 0 || idx === 1}
+                    className="w-full"
+                    aspect="aspect-[4/5]"
                   />
                 </div>
               ))}
             </div>
 
             {/* Action button inside camera screen */}
-            <div className="absolute bottom-[4.5cqw] z-20 pointer-events-auto scale-[clamp(0.72,0.18+0.7cqw,1)] origin-bottom">
+            <div className="absolute bottom-[2.5cqw] z-20 pointer-events-auto scale-[clamp(0.72,0.18+0.7cqw,1)] origin-bottom">
               <OutlineButton to="/portfolio">
                 View full portfolio
               </OutlineButton>
