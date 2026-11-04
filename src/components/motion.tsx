@@ -664,18 +664,22 @@ export function CurvedReelScrollExperience({
       const mWidth = curScreenW;
       const mHeight = curScreenH;
 
-      const x = -mWidth * 0.14 + t * (mWidth * 1.28);
-      const amplitudeY = isMobile ? mHeight * 0.14 : mHeight * 0.18;
-      const cardHalfH = isMobile ? 80 : 100;
-      const baseY = mHeight * 0.50 - cardHalfH;
-      const y =
-        baseY -
-        Math.sin(t * Math.PI * 1.8) * amplitudeY +
-        Math.cos(t * Math.PI * 2.2) * (isMobile ? 10 : 16);
-      const z = Math.sin(t * Math.PI) * (isMobile ? 60 : 120) - 20;
-      const angle = Math.cos(t * Math.PI * 1.8) * -14;
-      const tilt = Math.sin(t * Math.PI * 2) * 8;
-      return { x, y, z, angle, tilt };
+      // x: Center coordinate travels smoothly from right to left across camera screen
+      const x = mWidth * 1.15 - t * (mWidth * 1.30);
+
+      // y: Centered vertically in the camera screen with a gentle harmonic wave
+      const waveY = Math.sin(t * Math.PI * 1.5) * (isMobile ? mHeight * 0.035 : mHeight * 0.045);
+      const y = mHeight * 0.468 + waveY;
+
+      // z: Focal peak in the center so the active card pops forward towards the user
+      const centerFactor = Math.sin(Math.max(0, Math.min(1, t)) * Math.PI);
+      const z = centerFactor * (isMobile ? 65 : 125) - 20;
+
+      // Subtle dynamic camera rotation
+      const angle = Math.cos(t * Math.PI * 1.4) * (isMobile ? -5 : -8);
+      const tilt = Math.sin(t * Math.PI * 1.6) * (isMobile ? 3 : 5);
+
+      return { x, y, z, angle, tilt, centerFactor };
     };
 
     // ── Mouse & Breathing Physics ─────────────────────────────────────
@@ -706,7 +710,7 @@ export function CurvedReelScrollExperience({
           } else if (p >= 0.32 && p < 0.50) {
             hudModeRef.current.textContent = "[STUDIO STATEMENT · REC.709]";
           } else if (p >= 0.50 && p < 0.72) {
-            hudModeRef.current.textContent = "[SERPENTINE REEL · 10 FRAMES]";
+            hudModeRef.current.textContent = "[SERPENTINE REEL · 8 FRAMES]";
           } else {
             hudModeRef.current.textContent = "[STORIES CYLINDER · 16 FRAMES]";
           }
@@ -866,20 +870,27 @@ export function CurvedReelScrollExperience({
             else if (p > 0.69) ribbonOpacity = 1 - (p - 0.69) / 0.05;
             serpStage.style.opacity = String(Math.max(0, Math.min(1, ribbonOpacity)));
 
-            const ribbonProgress = (p - 0.46) / 0.26;
+            const ribbonProgress = (p - 0.46) / 0.28;
             serpCards.forEach((card, idx) => {
-              const offset = idx / ribbonCount;
-              // Calm, natural speed matched to scroll
-              const cardT = ribbonProgress * 0.96 - offset * 0.62;
-              const clampedT = Math.max(0, Math.min(1.08, cardT));
+              // Generous spacing between cards so photos are clearly visible without tight overlapping
+              const spacing = 0.22;
+              const cardT = ribbonProgress * 2.2 - idx * spacing + 0.35;
+              const clampedT = Math.max(-0.25, Math.min(1.25, cardT));
 
               const pt = getSerpentinePoint(clampedT);
-              const scale = (isMobile ? 0.75 : 0.88) + Math.sin(clampedT * Math.PI) * 0.18;
-              const cardOpacity = clampedT <= 0.01 || clampedT >= 1.05 ? 0 : 1;
+              const scale = (isMobile ? 0.95 : 1.05) + pt.centerFactor * 0.18;
 
-              card.style.transform = `translate3d(${pt.x}px, ${pt.y}px, ${pt.z}px) rotateZ(${pt.angle}deg) rotateX(${pt.tilt}deg) scale(${scale})`;
+              // Smooth fade at the screen edges
+              let cardOpacity = 0;
+              if (clampedT > 0 && clampedT < 1.0) {
+                if (clampedT < 0.12) cardOpacity = clampedT / 0.12;
+                else if (clampedT > 0.88) cardOpacity = (1.0 - clampedT) / 0.12;
+                else cardOpacity = 1;
+              }
+
+              card.style.transform = `translate3d(${pt.x}px, ${pt.y}px, ${pt.z}px) translate(-50%, -50%) rotateZ(${pt.angle}deg) rotateX(${pt.tilt}deg) scale(${scale})`;
               card.style.opacity = String(cardOpacity);
-              card.style.zIndex = String(Math.round(pt.z + 200));
+              card.style.zIndex = String(Math.round(pt.z + 300));
             });
           } else {
             serpStage.style.opacity = "0";
@@ -1050,8 +1061,8 @@ export function CurvedReelScrollExperience({
     };
   }, [items]);
 
-  // Gallery items for ribbon (10 spaced cards) and cylinder (16 cards)
-  const ribbonCards = Array.from({ length: 10 }).map((_, i) => items[i % items.length]);
+  // Gallery items for ribbon (8 spaced hero cards) and cylinder (16 cards)
+  const ribbonCards = Array.from({ length: 8 }).map((_, i) => items[i % items.length]);
   const cylinderCards = Array.from({ length: 16 }).map((_, i) => items[i % items.length]);
 
   return (
@@ -1198,23 +1209,24 @@ export function CurvedReelScrollExperience({
               {ribbonCards.map((item, idx) => (
                 <div
                   key={`ribbon-${idx}`}
-                  className="absolute left-0 top-0 w-[clamp(85px,22cqw,175px)] p-[clamp(5px,1.2cqw,10px)] rounded-lg bg-card/95 border border-border/80 shadow-2xl backdrop-blur-md will-change-transform pointer-events-auto"
+                  className="absolute left-0 top-0 w-[clamp(150px,35cqw,295px)] p-[clamp(7px,1.4cqw,13px)] rounded-xl md:rounded-2xl bg-[#13110f]/95 border border-gold/30 shadow-[0_16px_40px_rgba(0,0,0,0.85)] backdrop-blur-md will-change-transform pointer-events-auto"
                 >
-                  <div className="flex items-center justify-between pb-1 px-0.5 text-[clamp(6px,1.1cqw,8.5px)] font-mono tracking-widest text-muted-foreground border-b border-border/60">
-                    <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
-                    <span className="text-gold font-semibold">• 35MM</span>
+                  <div className="flex items-center justify-between pb-[1cqw] px-0.5 text-[clamp(7.5px,1.35cqw,11px)] font-mono tracking-widest text-muted-foreground border-b border-white/10">
+                    <span>UTSAV #{String((idx % 8) + 1).padStart(2, "0")}</span>
+                    <span className="text-gold font-semibold">• 35MM PRIME</span>
                   </div>
-                  <div className="w-full aspect-[4/5] mt-1.5 rounded overflow-hidden bg-muted/20 relative">
+                  <div className="w-full aspect-[4/5] mt-[1.2cqw] rounded-lg overflow-hidden bg-muted/20 relative shadow-inner">
                     <img
                       src={item.src}
                       alt={item.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                   </div>
-                  <div className="pt-1.5 px-0.5 flex justify-between items-center text-[clamp(7px,1.3cqw,10.5px)] leading-none">
-                    <span className="font-display text-foreground truncate">{item.title}</span>
-                    <span className="font-mono text-[clamp(6px,1.1cqw,9px)] text-muted-foreground shrink-0 ml-1">{item.category}</span>
+                  <div className="pt-[1.2cqw] px-0.5 flex justify-between items-center leading-none">
+                    <span className="font-display text-[clamp(9.5px,1.75cqw,14.5px)] text-foreground font-light tracking-wide truncate">{item.title}</span>
+                    <span className="font-mono text-[clamp(7.5px,1.25cqw,10.5px)] text-gold/90 shrink-0 ml-2 uppercase tracking-wider">{item.category}</span>
                   </div>
                 </div>
               ))}
