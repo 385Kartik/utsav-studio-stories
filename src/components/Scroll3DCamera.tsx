@@ -452,13 +452,14 @@ export function Scroll3DCamera() {
               }
             });
           }
-        } else if (p > 0.14 && p <= 0.25) {
+        } else if (p > 0.14 && p <= 0.30) {
           // Phase C: CAMERA MOVES FORWARD, LCD EXPANDS TO FULL SCREEN!
           setHudPhase("zoom");
           lcdGroup.visible = true;
 
-          const factor = (p - 0.14) / 0.11;
-          const eased = factor * factor; // Smooth forward zoom into viewport
+          const factor = Math.min(1, Math.max(0, (p - 0.14) / 0.12));
+          // Pure sine ease-in-out for buttery-smooth motion with zero sudden jerk
+          const eased = (1 - Math.cos(factor * Math.PI)) / 2;
 
           // Moves forward (posZ: 1.70 -> 2.95) and scales up (1.05 -> 2.60)
           // The LCD screen expands until it covers 100% of the viewport!
@@ -469,9 +470,9 @@ export function Scroll3DCamera() {
           masterPivot.rotation.set(0.0, Math.PI, 0);
           masterPivot.scale.setScalar(scale);
 
-          // Dissolve camera chassis so only the clean LCD screen expands to the edges
+          // Dissolve camera chassis softly so only the clean LCD screen expands to the edges
           if (modelsCacheRef.current[activeModel]) {
-            const chassisFade = Math.max(0, 1 - factor * 1.5);
+            const chassisFade = Math.max(0, 1 - eased * 1.5);
             modelsCacheRef.current[activeModel].traverse((child) => {
               if ((child as THREE.Mesh).isMesh) {
                 const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
@@ -480,9 +481,10 @@ export function Scroll3DCamera() {
             });
           }
 
-          // At p >= 0.22, the LCD screen borders reach viewport edges; crossfade to 2D Viewfinder
-          if (p >= 0.22) {
-            const crossfade = Math.max(0, 1 - (p - 0.22) / 0.03);
+          // At p >= 0.26, the LCD screen borders reach viewport edges.
+          // Smooth 1:1 equal-power crossfade to 2D Viewfinder overlay between 0.26 and 0.30
+          if (p >= 0.26) {
+            const crossfade = Math.max(0, 1 - (p - 0.26) / 0.04);
             mount.style.opacity = String(crossfade);
           } else {
             mount.style.opacity = "1";
