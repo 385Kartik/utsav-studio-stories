@@ -464,6 +464,7 @@ export function CurvedReelScrollExperience({
   const containerRef = useRef<HTMLDivElement>(null);
   const threeMountRef = useRef<HTMLDivElement>(null);
   const heroWrapperRef = useRef<HTMLDivElement>(null);
+  const heroBgRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLImageElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
   const cameraScreenRef = useRef<HTMLDivElement>(null);
@@ -484,6 +485,7 @@ export function CurvedReelScrollExperience({
     const container = containerRef.current;
     const threeMount = threeMountRef.current;
     const heroWrap = heroWrapperRef.current;
+    const heroBg = heroBgRef.current;
     const heroImg = heroImgRef.current;
     const heroText = heroTextRef.current;
     const cameraScreen = cameraScreenRef.current;
@@ -716,7 +718,33 @@ export function CurvedReelScrollExperience({
           }
         }
 
-        // 2. Hero 3D Typography Page-Fold & Squeeze (0.00 -> 0.16)
+        // 2. Hero Background Photo: Gradually darkens as camera approaches until full screen (0.00 -> 0.68)
+        if (heroBg) {
+          if (p <= 0.68) {
+            const darkProgress = Math.min(1, Math.max(0, p / 0.68));
+            // Eased gradual darkening: starts gentle, steadily deepens as camera zooms in
+            const easedDark = Math.pow(darkProgress, 1.15);
+            // Opacity starts at 0.45 and smoothly dims down to 0 at p = 0.68
+            const bgOpacity = Math.max(0, 0.45 * (1 - easedDark));
+            // Brightness gradually darkens from 1.0 down to 0.15
+            const bgBrightness = Math.max(0.12, 1.0 - easedDark * 0.88);
+            // Subtle cinematic background blur (depth of field) as camera approaches
+            const bgBlur = darkProgress * 8;
+
+            heroBg.style.opacity = String(bgOpacity);
+            heroBg.style.filter = `brightness(${bgBrightness}) blur(${bgBlur}px)`;
+            heroBg.style.visibility = "visible";
+
+            if (heroImg) {
+              heroImg.style.transform = `scale(${1.05 + darkProgress * 0.15}) translateY(${darkProgress * 30}px)`;
+            }
+          } else {
+            heroBg.style.opacity = "0";
+            heroBg.style.visibility = "hidden";
+          }
+        }
+
+        // 3. Hero 3D Typography Page-Fold & Squeeze (0.00 -> 0.16)
         if (heroWrap) {
           if (p <= 0.16) {
             const norm = p / 0.16;
@@ -732,9 +760,6 @@ export function CurvedReelScrollExperience({
             heroWrap.style.filter = `blur(${blur}px)`;
             heroWrap.style.pointerEvents = opacity > 0.1 ? "auto" : "none";
 
-            if (heroImg) {
-              heroImg.style.transform = `scale(${1.05 + norm * 0.25}) translateY(${norm * 40}px)`;
-            }
             if (heroText) {
               heroText.style.letterSpacing = `${-norm * 4}px`;
             }
@@ -1144,26 +1169,34 @@ export function CurvedReelScrollExperience({
         </div>
 
         {/* ------------------------------------------------------------ */}
+        {/* CINEMATIC HERO BACKGROUND PHOTO (Behind 3D Camera Stage)     */}
+        {/* Dims gradually as the camera zooms in until full screen!      */}
+        {/* ------------------------------------------------------------ */}
+        {heroImage && (
+          <div
+            ref={heroBgRef}
+            className="pointer-events-none absolute inset-0 z-0 overflow-hidden will-change-transform"
+          >
+            <img
+              ref={heroImgRef}
+              src={heroImage}
+              alt="A candid wedding moment photographed by Utsav Studio"
+              className="w-full h-full object-cover scale-105 opacity-45 mix-blend-luminosity filter contrast-125 will-change-transform"
+            />
+            {/* Cinematic top and bottom edge vignettes */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/80" />
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------ */}
         {/* STAGE 1: Hero Typography View with 3D Page-Fold & Squeeze    */}
         {/* ------------------------------------------------------------ */}
         <div
           ref={heroWrapperRef}
-          className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center p-6 will-change-transform"
+          className="absolute inset-0 z-15 flex flex-col items-center justify-center text-center p-6 will-change-transform pointer-events-none"
           style={{ transformOrigin: "center top", transformStyle: "preserve-3d" }}
         >
-          {heroImage && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <img
-                ref={heroImgRef}
-                src={heroImage}
-                alt="A candid wedding moment photographed by Utsav Studio"
-                className="w-full h-full object-cover scale-105 opacity-35 mix-blend-luminosity filter contrast-125 transition-transform duration-75 will-change-transform"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/90" />
-            </div>
-          )}
-
-          <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75 will-change-transform">
+          <div ref={heroTextRef} className="relative z-10 flex flex-col items-center transition-all duration-75 will-change-transform pointer-events-auto">
             <p data-hero-badge className="mb-4 text-[11px] uppercase tracking-[0.6em] text-gold font-mono font-medium opacity-0">
               Mira Road East · Est. 1994
             </p>
