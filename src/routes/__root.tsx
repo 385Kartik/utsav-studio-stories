@@ -86,9 +86,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Utsav Studio — Photography & Cinematography, Mira Road East" },
-      { name: "description", content: "Utsav Studio in Mira Road East — weddings, portraits, films and keepsakes since 1994." },
-      { property: "og:title", content: "Utsav Studio — Photography & Cinematography" },
+      { title: "Devoraaa Studio — Photography & Cinematography, Mira Road East" },
+      { name: "description", content: "Devoraaa Studio in Mira Road East — weddings, portraits, films and keepsakes since 1994." },
+      { property: "og:title", content: "Devoraaa Studio — Photography & Cinematography" },
       { property: "og:description", content: "Weddings, portraits and cinematic films from Mira Road East since 1994." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

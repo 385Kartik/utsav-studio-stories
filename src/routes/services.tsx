@@ -8,13 +8,13 @@ import { contact, serviceGroups } from "@/lib/media";
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Services — Utsav Studio, Mira Road East" },
+      { title: "Services — Devoraaa Studio, Mira Road East" },
       {
         name: "description",
         content:
-          "Wedding photography, cinematic films, maternity and kids portraits, photo editing, custom frames and album creation — Utsav Studio, Mira Road East.",
+          "Wedding photography, cinematic films, maternity and kids portraits, photo editing, custom frames and album creation — Devoraaa Studio, Mira Road East.",
       },
-      { property: "og:title", content: "Services — Utsav Studio" },
+      { property: "og:title", content: "Services — Devoraaa Studio" },
       {
         property: "og:description",
         content: "Weddings, portraits, films and hand-finished keepsakes from Mira Road East.",
@@ -104,7 +104,7 @@ function Services() {
           <ImageReveal className={i % 2 === 1 ? "md:order-2" : ""}>
             <ParallaxImage
               src={g.image}
-              alt={`${g.title} by Utsav Studio`}
+              alt={`${g.title} by Devoraaa Studio`}
               className="h-[60vh] md:h-[72vh]"
               speed={9}
             />

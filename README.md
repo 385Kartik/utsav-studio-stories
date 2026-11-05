@@ -1,9 +1,9 @@
-# Utsav Studio Stories
+# Devoraaa Studio Stories
 
 analyze this website (https://preview.themeforest.net/item/mistral-photography-creative-portfolio-template/full_screen_preview/62484153)there is lot of scoll and motion animation , you haveto do more than that animated and creative 
 
 but for new project :
-client detail :Utsav Studio (led by Utsav Morjaria) is a popular photography and cinematography studio located in Shanti Nagar, Mira Road East. [1, 2]
+client detail :Devoraa Studio (led by Devoraaa Morjaria) is a popular photography and cinematography studio located in Shanti Nagar, Mira Road East. [1, 2]
 
 Contact & Location Details
 

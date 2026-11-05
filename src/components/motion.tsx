@@ -1038,7 +1038,7 @@ export function CurvedReelScrollExperience({
         heroScrambleEl.style.opacity = "1";
         animate(heroScrambleEl, {
           innerHTML: scrambleText({
-            text: "Utsav Studio",
+            text: "Devoraaa Studio",
             chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ#@!%&",
             speed: 0.7,
             revealDelay: 200,
@@ -1180,7 +1180,7 @@ export function CurvedReelScrollExperience({
             <img
               ref={heroImgRef}
               src={heroImage}
-              alt="A candid wedding moment photographed by Utsav Studio"
+              alt="A candid wedding moment photographed by Devoraaa Studio"
               className="w-full h-full object-cover scale-105 opacity-45 mix-blend-luminosity filter contrast-125 will-change-transform"
             />
             {/* Cinematic top and bottom edge vignettes */}
@@ -1205,9 +1205,9 @@ export function CurvedReelScrollExperience({
                 data-hero-scramble
                 className="inline-block will-change-transform"
                 style={{ opacity: 0 }}
-                aria-label="Utsav Studio"
+                aria-label="Devoraaa Studio"
               >
-                Utsav Studio
+                Devoraaa Studio
               </span>
             </h1>
             <span data-hero-line className="mt-6 h-px w-20 bg-gold/60 origin-center will-change-transform opacity-0" aria-hidden />
@@ -1295,7 +1295,7 @@ export function CurvedReelScrollExperience({
                   className="absolute left-0 top-0 w-[clamp(155px,34cqw,290px)] p-[clamp(7px,1.4cqw,13px)] rounded-xl md:rounded-2xl bg-[#13110f]/95 border border-gold/30 shadow-[0_16px_40px_rgba(0,0,0,0.85)] backdrop-blur-md will-change-transform pointer-events-auto"
                 >
                   <div className="flex items-center justify-between pb-[1cqw] px-0.5 text-[clamp(7.5px,1.35cqw,11px)] font-mono tracking-widest text-muted-foreground border-b border-white/10">
-                    <span>UTSAV #{String((idx % 7) + 1).padStart(2, "0")}</span>
+                    <span>Devoraaa #{String((idx % 7) + 1).padStart(2, "0")}</span>
                     <span className="text-gold font-semibold">• 35MM PRIME</span>
                   </div>
                   <div className="w-full aspect-[4/5] mt-[1.2cqw] rounded-lg overflow-hidden bg-muted/20 relative shadow-inner">
@@ -1409,7 +1409,7 @@ export function CurvedReelScrollExperience({
             {/* Bottom Bar with gentle cinema vignette */}
             <div className="w-full bg-gradient-to-t from-black/85 via-black/35 to-transparent px-[3.5cqw] pb-[2.2cqw] pt-[3cqw] flex items-center justify-between text-[clamp(5.8px,1.35cqw,10.5px)] font-mono tracking-wider text-gold/90 whitespace-nowrap leading-none select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
               <div className="flex items-center gap-[1.2cqw]">
-                <span className="text-white font-semibold">35MM PRIME · UTSAV</span>
+                <span className="text-white font-semibold">35MM PRIME · Devoraaa</span>
                 <span className="text-emerald-400 font-mono text-[clamp(5.2px,1.2cqw,9px)]">[AF-C · EYE-TRACK]</span>
               </div>
               <div className="flex items-center gap-[1.2cqw]">

@@ -19,9 +19,9 @@ export const contact = {
     "Mira Bhayandar, Maharashtra 401107",
   ],
   mapsQuery:
-    "Utsav Studio, Shop No 7, Building B-4, Swaminarayan Road, Sector 10, Shanti Nagar, Mira Road East, Mira Bhayandar, Maharashtra 401107",
+    "Devoraaa Studio, Shop No 7, Building B-4, Swaminarayan Road, Sector 10, Shanti Nagar, Mira Road East, Mira Bhayandar, Maharashtra 401107",
   mapsLink:
-    "https://www.google.com/maps/search/?api=1&query=Utsav%20Studio%20Shanti%20Nagar%20Mira%20Road%20East%20Maharashtra%20401107",
+    "https://www.google.com/maps/search/?api=1&query=Devoraaa%20Studio%20Shanti%20Nagar%20Mira%20Road%20East%20Maharashtra%20401107",
 };
 
 export interface GalleryItem {

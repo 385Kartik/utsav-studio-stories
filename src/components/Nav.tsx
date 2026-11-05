@@ -64,11 +64,11 @@ export function Nav() {
             to="/"
             onClick={() => setOpen(false)}
             className="group flex items-center gap-3 transition-opacity duration-300 hover:opacity-90"
-            aria-label="Utsav Morjaria Photography — home"
+            aria-label="Devoraaa Morjaria Photography — home"
           >
             <img
-              src="/utsav-logo.png"
-              alt="Utsav Morjaria Photography"
+              src="/Devoraaa-logo.png"
+              alt="Devoraaa Morjaria Photography"
               className="h-13 md:h-16 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(212,163,89,0.45)] transition-transform duration-500 group-hover:scale-105"
             />
             <div className="hidden sm:flex flex-col">

@@ -8,7 +8,7 @@ export function Footer() {
     <footer className="grain-surface relative border-t border-border bg-card">
       <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:px-10 md:py-20">
         <div>
-          <img src="/utsav-logo.png" alt="Utsav Morjaria Photography" className="h-16 w-auto object-contain md:h-20" />
+          <img src="/Devoraaa-logo.png" alt="Devoraaa Morjaria Photography" className="h-16 w-auto object-contain md:h-20" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
             A photography &amp; cinematography studio in Mira Road East, capturing weddings,
             portraits and family stories since 1994.
@@ -71,7 +71,7 @@ export function Footer() {
       </div>
 
       <div className="flex flex-col gap-2 border-t border-border px-6 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-10">
-        <span>© {new Date().getFullYear()} Utsav Studio · All rights reserved</span>
+        <span>© {new Date().getFullYear()} Devoraaa Studio · All rights reserved</span>
         <span>Established 1994 · Mira Road East, Maharashtra</span>
       </div>
     </footer>

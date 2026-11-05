@@ -277,7 +277,7 @@ export function Crazy3DCard({
             >
               <div className="border border-gold/40 rounded p-1.5 bg-black/60 text-right">
                 <span className="font-display text-[9px] uppercase tracking-widest text-gold block">
-                  UTSAV
+                  Devoraaa
                 </span>
                 <span className="font-mono text-[7px] tracking-wider text-muted-foreground block">
                   EST. 1994
@@ -377,7 +377,7 @@ export function Crazy3DCard({
           <div className="relative z-10 flex items-center justify-between border-b border-gold/30 pb-2">
             <div>
               <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-gold block">
-                UTSAV STUDIO ARCHIVE
+                Devoraaa STUDIO ARCHIVE
               </span>
               <span className="font-display text-xs text-foreground/90 font-light">
                 Vintage Proof Sheet

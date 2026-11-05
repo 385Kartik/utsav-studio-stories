@@ -22,14 +22,14 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
-        title: "Utsav Studio — Wedding Photography & Cinematography in Mira Road East",
+        title: "Devoraaa Studio — Wedding Photography & Cinematography in Mira Road East",
       },
       {
         name: "description",
         content:
-          "Candid wedding photography, cinematic films, maternity, baby and family portraits from Utsav Studio, Shanti Nagar, Mira Road East. Studio since 1994. Call +91 98193 91538.",
+          "Candid wedding photography, cinematic films, maternity, baby and family portraits from Devoraaa Studio, Shanti Nagar, Mira Road East. Studio since 1994. Call +91 98193 91538.",
       },
-      { property: "og:title", content: "Utsav Studio — Wedding Photography & Cinematography" },
+      { property: "og:title", content: "Devoraaa Studio — Wedding Photography & Cinematography" },
       {
         property: "og:description",
         content: "Candid weddings, cinematic films and family portraits from Mira Road East since 1994.",
@@ -103,7 +103,7 @@ function Hero() {
         <img
           data-hero-img
           src={media.hero}
-          alt="A candid wedding moment photographed by Utsav Studio"
+          alt="A candid wedding moment photographed by Devoraaa Studio"
           className="h-full w-full object-cover will-change-transform"
           width={1920}
           height={1088}
@@ -119,7 +119,7 @@ function Hero() {
           Mira Road East · Est. 1994
         </p>
         <h1 className="font-display text-[14vw] font-light leading-[0.98] tracking-tight text-foreground md:text-[9.5vw]">
-          <AnimatedTitle text="Utsav Studio" delay={2.55} />
+          <AnimatedTitle text="Devoraaa Studio" delay={2.55} />
         </h1>
         <span data-hero-item className="mt-8 h-px w-16 bg-foreground/40" aria-hidden />
         <p
@@ -147,7 +147,7 @@ function Statement() {
       </h2>
       <Reveal delay={0.15}>
         <p className="mx-auto mt-10 max-w-xl text-base leading-relaxed text-muted-foreground">
-          From the Mandap to the maternity room, Utsav Studio has been the quiet witness to Mira
+          From the Mandap to the maternity room, Devoraaa Studio has been the quiet witness to Mira
           Road's biggest days — photographing them candidly, filming them cinematically, and
           finishing every frame by hand.
         </p>
@@ -181,7 +181,7 @@ function FramesGallery() {
             <div className="overflow-hidden">
               <img
                 src={item.src}
-                alt={`${item.title} — ${item.category} photography by Utsav Studio`}
+                alt={`${item.title} — ${item.category} photography by Devoraaa Studio`}
                 loading="lazy"
                 width={1088}
                 height={1360}
@@ -323,7 +323,7 @@ function ServicesScroller() {
               <img
                 key={g.no}
                 src={g.image}
-                alt={`${g.title} by Utsav Studio`}
+                alt={`${g.title} by Devoraaa Studio`}
                 loading={i === 0 ? "eager" : "lazy"}
                 className={`absolute inset-0 h-full w-full object-cover transition-all duration-[900ms] ease-out ${
                   active === i ? "scale-100 opacity-100" : "scale-[1.06] opacity-0"

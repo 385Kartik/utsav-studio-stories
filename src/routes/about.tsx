@@ -9,13 +9,13 @@ import { CtaBand } from "./index";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — Utsav Studio, Mira Road East" },
+      { title: "About — Devoraaa Studio, Mira Road East" },
       {
         name: "description",
         content:
-          "The story of Utsav Studio — a Mira Road East photography and cinematography studio led by Utsav Morjaria, serving families since 1994.",
+          "The story of Devoraaa Studio — a Mira Road East photography and cinematography studio led by Devoraaa Morjaria, serving families since 1994.",
       },
-      { property: "og:title", content: "About Utsav Studio — A Legacy in Light Since 1994" },
+      { property: "og:title", content: "About Devoraaa Studio — A Legacy in Light Since 1994" },
       {
         property: "og:description",
         content: "Three decades of weddings, portraits and cinematic films from Mira Road East.",
@@ -56,7 +56,7 @@ function About() {
         <ImageReveal className="relative">
           <ParallaxImage
             src={media.family}
-            alt="A multi-generation family portrait by Utsav Studio"
+            alt="A multi-generation family portrait by Devoraaa Studio"
             className="h-[70vh]"
             speed={9}
           />
@@ -76,7 +76,7 @@ function About() {
           </Reveal>
           <Reveal delay={0.15}>
             <p className="mt-6 text-base leading-relaxed text-muted-foreground">
-              Led by <span className="text-foreground">Utsav Morjaria</span>, the studio blends
+              Led by <span className="text-foreground">Devoraaa Morjaria</span>, the studio blends
               old-school studio discipline with modern candid and cinematic craft — traditional
               rituals covered respectfully, real emotions chased relentlessly.
             </p>
@@ -148,7 +148,7 @@ function About() {
         </Reveal>
         <Reveal delay={0.1}>
           <p className="mt-8 text-xs uppercase tracking-[0.4em] text-muted-foreground">
-            Utsav Morjaria · Founder
+            Devoraaa Morjaria · Founder
           </p>
         </Reveal>
       </section>
@@ -157,7 +157,7 @@ function About() {
       <section className="relative h-[70vh] overflow-hidden">
         <ParallaxImage
           src={media.cinema}
-          alt="Utsav Studio filming a couple on set"
+          alt="Devoraaa Studio filming a couple on set"
           className="absolute inset-0"
           speed={12}
         />

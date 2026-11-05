@@ -18,13 +18,13 @@ export const Route = createFileRoute("/portfolio")({
   },
   head: () => ({
     meta: [
-      { title: "Portfolio — Utsav Studio, Mira Road East" },
+      { title: "Portfolio — Devoraaa Studio, Mira Road East" },
       {
         name: "description",
         content:
-          "Selected wedding, pre-wedding, maternity, kids, birthday and cinematic film frames from Utsav Studio, Mira Road East.",
+          "Selected wedding, pre-wedding, maternity, kids, birthday and cinematic film frames from Devoraaa Studio, Mira Road East.",
       },
-      { property: "og:title", content: "Portfolio — Selected Frames by Utsav Studio" },
+      { property: "og:title", content: "Portfolio — Selected Frames by Devoraaa Studio" },
       {
         property: "og:description",
         content: "Weddings, portraits and cinematic films — selected frames from the studio.",
@@ -197,7 +197,7 @@ function Portfolio() {
                   <div className={`overflow-hidden rounded-sm bg-muted/20 ${aspectCycle[i % aspectCycle.length]}`}>
                     <img
                       src={item.src}
-                      alt={`${item.title} — ${item.category} photography by Utsav Studio`}
+                      alt={`${item.title} — ${item.category} photography by Devoraaa Studio`}
                       loading="lazy"
                       width={1088}
                       height={1360}

@@ -7,13 +7,13 @@ import { contact } from "@/lib/media";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Utsav Studio, Mira Road East" },
+      { title: "Contact — Devoraaa Studio, Mira Road East" },
       {
         name: "description",
         content:
-          "Visit Utsav Studio at Shanti Nagar, Mira Road East. Open Tue–Sun, 11 AM–9:30 PM. Call or WhatsApp +91 98193 91538 to book your date.",
+          "Visit Devoraaa Studio at Shanti Nagar, Mira Road East. Open Tue–Sun, 11 AM–9:30 PM. Call or WhatsApp +91 98193 91538 to book your date.",
       },
-      { property: "og:title", content: "Contact Utsav Studio — Book Your Date" },
+      { property: "og:title", content: "Contact Devoraaa Studio — Book Your Date" },
       {
         property: "og:description",
         content: "Shanti Nagar, Mira Road East · Tue–Sun 11 AM–9:30 PM · +91 98193 91538.",
@@ -125,7 +125,7 @@ function Contact() {
         <Reveal delay={0.1} className="min-h-[420px]">
           <div className="relative h-full min-h-[420px] overflow-hidden border border-border">
             <iframe
-              title="Map to Utsav Studio, Shanti Nagar, Mira Road East"
+              title="Map to Devoraaa Studio, Shanti Nagar, Mira Road East"
               src={mapSrc}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
