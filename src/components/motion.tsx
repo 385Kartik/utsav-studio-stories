@@ -1219,7 +1219,7 @@ export function CurvedReelScrollExperience({
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
 
             {/* Autofocus Bracket directly locked on the happy couple */}
-            <div className="absolute left-[54%] top-[48%] -translate-x-1/2 -translate-y-1/2 w-[clamp(20px,6cqw,52px)] h-[clamp(20px,6cqw,52px)] border-[1.5px] border-gold/90 rounded-[2px] flex items-center justify-center shadow-[0_0_10px_rgba(212,163,89,0.4)]">
+            <div className="absolute left-[36%] top-[46%] -translate-x-1/2 -translate-y-1/2 w-[clamp(20px,6cqw,52px)] h-[clamp(20px,6cqw,52px)] border-[1.5px] border-gold/90 rounded-[2px] flex items-center justify-center shadow-[0_0_10px_rgba(212,163,89,0.4)]">
               <span className="text-gold text-[clamp(7px,1.6cqw,13px)] font-mono font-bold leading-none">+</span>
               <span className="absolute -top-[2cqw] right-0 text-[clamp(5px,1.1cqw,8.5px)] font-mono tracking-widest text-gold font-bold bg-black/85 px-[0.6cqw] py-[0.2cqw] rounded border border-gold/40 leading-none whitespace-nowrap">
                 AF-LOCK
