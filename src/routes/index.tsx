@@ -47,21 +47,6 @@ function Index() {
       {/* 3D Storytelling Experience with Camera & Curved Reel */}
       <CurvedReelScrollExperience items={galleryItems} heroImage={media.hero} />
 
-      {/* Infinite Cinematic Marquee Ticker */}
-      <CinematicMarquee />
-
-      {/* Anime.js Iconic Circular Radar Dial & Wave Modulator */}
-      {/* <section className="relative z-20 py-24 bg-background border-t border-border/40 overflow-hidden flex flex-col items-center text-center">
-        <Eyebrow>Optical resonance</Eyebrow>
-        <h2 className="mt-3 font-display text-4xl md:text-6xl font-light text-foreground tracking-tight max-w-xl">
-          Harmonics in motion.
-        </h2>
-        <p className="mt-4 text-xs md:text-sm text-muted-foreground font-light max-w-md leading-relaxed">
-          Modulate shutter resonance and frequency wavelength with the interactive Anime.js timeline dial.
-        </p>
-        <AnimeHeroDial className="mt-12" />
-      </section> */}
-
       {/* Services Section with clickable categories */}
       <ServicesScroller />
 
@@ -259,7 +244,7 @@ function ServicesScroller() {
   return (
     <section
       ref={ref}
-      className="relative z-20 mx-auto max-w-7xl px-6 -mt-[25vh] md:-mt-[30vh] pt-16 pb-6 md:pt-20 md:pb-8 md:px-10 bg-gradient-to-b from-transparent via-background/90 to-background"
+      className="relative z-20 mx-auto max-w-7xl px-6 pt-24 pb-12 md:pt-32 md:pb-16 md:px-10 bg-gradient-to-b from-transparent via-background/90 to-background"
     >
       <div className="mb-14 max-w-2xl">
         <Reveal>

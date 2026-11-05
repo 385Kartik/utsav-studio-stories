@@ -3,7 +3,7 @@ import { animate, scrambleText, stagger } from "animejs";
 import { useEffect, useRef, useState } from "react";
 import { refreshScrollTriggers } from "@/components/motion";
 
-const BRAND = "UTSAV STUDIO";
+const BRAND = "Utsav Studio";
 
 export function Preloader() {
   const [done, setDone] = useState(false);

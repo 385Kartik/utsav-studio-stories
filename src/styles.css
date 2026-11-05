@@ -1,4 +1,4 @@
-﻿@import "tailwindcss" source(none);
+@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
@@ -40,8 +40,10 @@
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-ember: var(--ember);
-  --font-display: "Syne", sans-serif;
-  --font-grotesk: "Syne", sans-serif;
+  --font-display: "Alex Brush", "Pinyon Script", "Great Vibes", cursive;
+  --font-calligraphy: "Alex Brush", "Pinyon Script", "Great Vibes", cursive;
+  --font-grotesk: "Cormorant Garamond", Georgia, serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
 }
 
 :root {
@@ -144,9 +146,13 @@
   h1,
   h2,
   h3,
-  h4 {
+  h4,
+  h5,
+  h6,
+  .font-display {
     font-family: var(--font-display);
-    font-weight: 500;
+    font-weight: 400;
+    letter-spacing: normal;
   }
 }
 
